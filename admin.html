@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>GSC Study — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════
+   CONFIG — заполни после установки
+══════════════════════════════════ */
+/* GitHub Token, Repo, Owner вводятся в Настройках */
+
+:root{
+  --navy:#0B2545;--blue:#1A5276;--sky:#3498DB;--sky-l:#EBF5FB;
+  --green:#27AE60;--green-l:#EAFAF1;--red:#E74C3C;--red-l:#FDEDEC;
+  --gold:#F39C12;--gold-l:#FEF9E7;--purple:#8E44AD;--orange:#E67E22;
+  --w:#fff;--g50:#F8FAFC;--g100:#F1F5F9;--g200:#E2E8F0;
+  --g400:#94A3B8;--g500:#64748B;--g600:#475569;--g700:#334155;
+  --g800:#1E293B;--g900:#0F172A;
+  --sw:220px;--hh:54px;--r:8px;--rl:12px;
+  --sh:0 1px 3px rgba(0,0,0,.07);--shm:0 4px 16px rgba(0,0,0,.09);
+  --t:.15s ease;--f:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--f);font-size:14px;color:var(--g800);background:var(--g50)}
+a{text-decoration:none;color:inherit}ul{list-style:none}
+button{cursor:pointer;font-family:var(--f);border:none;background:none}
+input,select,textarea{font-family:var(--f)}
+
+/* ═══ LOGIN ═══ */
+#login{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy),#193a5c);display:flex;align-items:center;justify-content:center;z-index:9999}
+.lbox{background:#fff;border-radius:18px;padding:36px;width:340px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.ll{display:flex;align-items:center;gap:9px;margin-bottom:24px}
+.llm{width:38px;height:38px;background:var(--navy);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0}
+.llt strong{display:block;font-size:15px;font-weight:800;color:var(--navy)}
+.llt small{font-size:10px;color:var(--g400);font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.lh2{font-size:19px;font-weight:800;color:var(--g900);margin-bottom:3px}
+.lsub{font-size:12px;color:var(--g500);margin-bottom:20px}
+.lf{margin-bottom:12px}
+.lf label{display:block;font-size:10px;font-weight:700;color:var(--g600);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.lf input{width:100%;padding:9px 12px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:13px;outline:none;transition:var(--t)}
+.lf input:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(52,152,219,.1)}
+.lbtn{width:100%;padding:11px;border-radius:var(--r);background:var(--navy);color:#fff;font-weight:700;font-size:13px;margin-top:4px;transition:var(--t)}
+.lbtn:hover{background:var(--blue)}
+.lerr{display:none;color:var(--red);font-size:12px;text-align:center;margin-top:8px}
+.lhint{font-size:11px;color:var(--g400);text-align:center;margin-top:12px}
+
+/* ═══ APP ═══ */
+#app{display:none;height:100vh;overflow:hidden;flex-direction:column}
+#app.show{display:flex}
+
+.topbar{height:var(--hh);background:#fff;border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;box-shadow:var(--sh)}
+.tbl{display:flex;align-items:center;gap:8px;width:var(--sw);flex-shrink:0}
+.tblm{width:28px;height:28px;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:10px;flex-shrink:0}
+.tbname{font-size:13px;font-weight:800;color:var(--navy)}
+.tbr{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-badge{display:none;align-items:center;gap:4px;background:var(--red-l);color:var(--red);font-size:11px;font-weight:700;padding:3px 8px;border-radius:100px;cursor:pointer}
+.gh-status{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 9px;border-radius:100px}
+.gh-status.ok{background:var(--green-l);color:var(--green)}
+.gh-status.off{background:var(--g100);color:var(--g500)}
+.gh-status.err{background:var(--red-l);color:var(--red)}
+.ghsdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tbu{font-size:12px;font-weight:600;color:var(--g700)}
+.tbav{width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+.tblout{padding:4px 9px;border-radius:var(--r);border:1px solid var(--g200);color:var(--g500);font-size:12px;font-weight:600;transition:var(--t)}
+.tblout:hover{background:var(--g100)}
+
+.app-body{display:flex;flex:1;overflow:hidden}
+
+/* Sidebar */
+.sidebar{width:var(--sw);background:#fff;border-right:1px solid var(--g200);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.ns{padding:12px 12px 5px;font-size:9px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.09em}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;margin:1px 6px;cursor:pointer;transition:var(--t);color:var(--g600);font-weight:500;font-size:12.5px}
+.ni:hover{background:var(--g100);color:var(--g900)}
+.ni.active{background:var(--sky-l);color:var(--sky)}
+.nic{font-size:14px;width:17px;text-align:center;flex-shrink:0}
+.nibadge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px}
+.sbottom{margin-top:auto;padding:10px;border-top:1px solid var(--g200)}
+.ghind{display:flex;align-items:center;gap:7px;padding:8px 10px;background:var(--g50);border-radius:var(--r);font-size:11px}
+.ghidot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* Main */
+.main{flex:1;overflow-y:auto;background:var(--g50)}
+.page{display:none;padding:18px;max-width:1320px}
+.page.active{display:block}
+
+/* ═══ UI COMPONENTS ═══ */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.ph h1{font-size:19px;font-weight:800;color:var(--g900)}
+.ph p{font-size:12px;color:var(--g500);margin-top:2px}
+.phbtns{display:flex;gap:7px;flex-wrap:wrap}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);font-weight:600;font-size:12px;font-family:var(--f);transition:var(--t);cursor:pointer;white-space:nowrap;border:none}
+.btn-primary{background:var(--sky);color:#fff}.btn-primary:hover{background:#2389c5}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{background:#229954}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{background:#c0392b}
+.btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:#d68910}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--blue)}
+.btn-outline{background:#fff;color:var(--g700);border:1.5px solid var(--g200)!important}.btn-outline:hover{background:var(--g50)}
+.btn-ghost{background:transparent;color:var(--g500);padding:5px 7px}.btn-ghost:hover{background:var(--g100)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-xs{padding:2px 6px;font-size:10px;border-radius:4px}
+
+/* Stats */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);padding:15px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px}
+.sc.blue::before{background:var(--sky)}.sc.green::before{background:var(--green)}
+.sc.gold::before{background:var(--gold)}.sc.purple::before{background:var(--purple)}
+.sc.red::before{background:var(--red)}
+.sl{font-size:10px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.sv{font-size:24px;font-weight:800;color:var(--g900);line-height:1}
+.sd{font-size:11px;font-weight:500;margin-top:3px;color:var(--g400)}
+.sic{position:absolute;top:12px;right:12px;font-size:18px;opacity:.12}
+
+/* Card */
+.card{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);padding:16px;box-shadow:var(--sh)}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ct{font-size:13px;font-weight:800;color:var(--g900)}
+
+/* Table */
+.tw{overflow-x:auto;border-radius:var(--r);border:1px solid var(--g200)}
+table{width:100%;border-collapse:collapse;background:#fff}
+thead th{background:var(--g50);padding:8px 11px;text-align:left;font-size:9.5px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--g200);white-space:nowrap}
+tbody td{padding:9px 11px;border-bottom:1px solid var(--g100);font-size:12px;color:var(--g700);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--g50)}
+.te{text-align:center;padding:32px;color:var(--g400);font-size:12px}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700;white-space:nowrap}
+.pb{background:var(--sky-l);color:var(--sky)}.pg{background:var(--green-l);color:var(--green)}
+.pr{background:var(--red-l);color:var(--red)}.pgo{background:var(--gold-l);color:var(--gold)}
+.pgr{background:var(--g100);color:var(--g500)}.pp{background:#F3E5F5;color:var(--purple)}
+.po{background:#FDEBD0;color:var(--orange)}
+
+/* Form */
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10px;font-weight:700;color:var(--g600);text-transform:uppercase;letter-spacing:.06em}
+.fg input,.fg select,.fg textarea{padding:7px 10px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:13px;color:var(--g800);outline:none;transition:var(--t);background:#fff;width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(52,152,219,.1)}
+.fg textarea{resize:vertical;min-height:65px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.full{grid-column:1/-1}
+.fa{display:flex;gap:7px;margin-top:14px;padding-top:12px;border-top:1px solid var(--g200)}
+
+/* Tabs */
+.tabs{display:flex;background:var(--g100);border-radius:var(--r);padding:3px;gap:2px;margin-bottom:14px;width:fit-content}
+.tab{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;color:var(--g500);cursor:pointer;transition:var(--t)}
+.tab.active{background:#fff;color:var(--g900);box-shadow:var(--sh)}
+
+/* Filter */
+.fb{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.fb input,.fb select{padding:6px 10px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;color:var(--g800);outline:none;background:#fff;transition:var(--t)}
+.fb input:focus,.fb select:focus{border-color:var(--sky)}
+.fb input{min-width:190px}
+
+/* Modal */
+.mb{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.mb.open{display:flex}
+.md{background:#fff;border-radius:var(--rl);padding:22px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.18);animation:popi .2s ease}
+@keyframes popi{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mh h3{font-size:15px;font-weight:800;color:var(--g900)}
+.mx{width:26px;height:26px;border-radius:50%;background:var(--g100);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--g500)}
+.mx:hover{background:var(--g200)}
+
+/* Toast */
+.twrap{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.toast{padding:9px 14px;border-radius:var(--r);color:#fff;font-size:12px;font-weight:600;box-shadow:var(--shm);animation:tin .2s ease;pointer-events:all;display:flex;align-items:center;gap:6px;max-width:280px}
+.toast.success{background:var(--green)}.toast.error{background:var(--red)}
+.toast.info{background:var(--sky)}.toast.warning{background:var(--gold)}
+@keyframes tin{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+
+/* Pagination */
+.pag{display:flex;align-items:center;gap:4px;margin-top:12px;justify-content:flex-end}
+.pb2{width:28px;height:28px;border-radius:var(--r);background:#fff;border:1px solid var(--g200);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;font-weight:700;color:var(--g600);transition:var(--t)}
+.pb2:hover{border-color:var(--sky);color:var(--sky)}.pb2.active{background:var(--sky);border-color:var(--sky);color:#fff}
+
+/* Content sections */
+.cs{background:#fff;border:1px solid var(--g200);border-radius:var(--rl);padding:16px;margin-bottom:12px}
+.cst{font-size:13px;font-weight:800;color:var(--g900);margin-bottom:13px;display:flex;align-items:center;gap:6px}
+
+/* Toggle */
+.tg{position:relative;width:34px;height:19px;flex-shrink:0}
+.tg input{opacity:0;width:0;height:0}
+.tgs{position:absolute;inset:0;background:var(--g200);border-radius:100px;cursor:pointer;transition:.25s}
+.tgs::before{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;left:3px;top:3px;transition:.25s;box-shadow:var(--sh)}
+.tg input:checked+.tgs{background:var(--green)}
+.tg input:checked+.tgs::before{transform:translateX(15px)}
+
+/* Charts */
+.bchart{display:flex;gap:3px;align-items:flex-end;margin-top:8px}
+.bbar{flex:1;background:var(--sky-l);border-radius:2px 2px 0 0;transition:var(--t);cursor:pointer;min-width:5px}
+.bbar:hover{background:var(--sky)}
+
+/* Setup */
+.setup{background:linear-gradient(135deg,var(--navy),#1e3f66);border-radius:var(--rl);padding:22px;margin-bottom:18px;color:#fff}
+.setup h2{font-size:17px;font-weight:800;margin-bottom:7px}
+.setup p{font-size:12px;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:14px}
+.sstep{display:flex;gap:9px;margin-bottom:8px;font-size:12px;color:rgba(255,255,255,.85);align-items:flex-start}
+.ssn{width:19px;height:19px;border-radius:50%;background:var(--sky);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px}
+.sir{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.si{flex:1;min-width:180px;padding:8px 11px;border:1px solid rgba(255,255,255,.2);border-radius:var(--r);background:rgba(255,255,255,.1);color:#fff;font-size:12px;outline:none}
+.si::placeholder{color:rgba(255,255,255,.4)}
+.si:focus{border-color:var(--sky);background:rgba(255,255,255,.15)}
+
+/* Q editor */
+.qi{background:#fff;border:1px solid var(--g200);border-radius:var(--r);padding:11px;margin-bottom:6px;cursor:pointer;transition:var(--t)}
+.qi:hover{box-shadow:var(--shm);border-color:var(--sky)}.qi.active{border-color:var(--sky);background:var(--sky-l)}
+.qnum{font-size:9px;font-weight:700;color:var(--g400);text-transform:uppercase;margin-bottom:2px}
+.qprev{font-size:12px;font-weight:600;color:var(--g800)}
+.or{display:flex;gap:7px;align-items:center;margin-bottom:6px}
+.or input{flex:1;padding:6px 9px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;outline:none;transition:var(--t)}
+.or input:focus{border-color:var(--sky)}
+.ocb{width:26px;height:26px;border-radius:50%;border:2px solid var(--g200);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--t);background:#fff;flex-shrink:0;font-size:11px}
+.ocb.sel{border-color:var(--green);background:var(--green);color:#fff}
+.odb{width:24px;height:24px;border-radius:50%;background:var(--red-l);color:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;flex-shrink:0}
+.odb:hover{background:var(--red);color:#fff}
+
+/* News editor */
+.newsitem{background:#fff;border:1px solid var(--g200);border-radius:var(--r);padding:13px;margin-bottom:8px}
+.newsitem-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.newsitem-type{display:flex;gap:6px}
+.ntype{padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;cursor:pointer;border:1.5px solid var(--g200);background:#fff;color:var(--g500);transition:var(--t)}
+.ntype.sel{border-color:var(--sky);background:var(--sky-l);color:var(--sky)}
+
+/* Activity */
+.act{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid var(--g100)}
+.act:last-child{border-bottom:none}
+.actd{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.actt{font-size:11px;color:var(--g700);line-height:1.5}
+.actm{font-size:10px;color:var(--g400);margin-top:1px}
+
+@media(max-width:768px){.sg{grid-template-columns:1fr 1fr}.fg2,.fg3{grid-template-columns:1fr}.sidebar{display:none}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="lbox">
+    <div class="ll"><div class="llm">GSC</div><div class="llt"><strong>GSC Study</strong><small>Admin Panel</small></div></div>
+    <div class="lh2">Панель управления</div>
+    <div class="lsub">Вход для администраторов</div>
+    <div class="lf"><label>Логин</label><input id="lu" type="text" placeholder="admin" value="admin"/></div>
+    <div class="lf"><label>Пароль</label><input id="lp" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button class="lbtn" onclick="doLogin()">Войти →</button>
+    <div class="lerr" id="lerr">Неверный логин или пароль</div>
+    <div class="lhint">admin / gsc2026</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="tbl"><div class="tblm">GSC</div><span class="tbname">Admin</span></div>
+    <div class="tbr">
+      <div class="tb-badge" id="tb-badge" onclick="navTo('leads')">🔴 <span id="tb-badge-n">0</span> новых</div>
+      <div class="gh-status off" id="gh-st"><div class="ghsdot" id="gh-dot"></div><span id="gh-txt">GitHub</span></div>
+      <span class="tbu" id="tbu">Admin</span>
+      <div class="tbav" id="tbav">A</div>
+      <button class="tblout" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <nav class="sidebar">
+      <div class="ns">Главное</div>
+      <div class="ni active" onclick="navTo('dashboard')"><span class="nic">📊</span>Dashboard</div>
+      <div class="ni" onclick="navTo('leads')"><span class="nic">👥</span>Лиды<span class="nibadge" id="nb" style="display:none">0</span></div>
+      <div class="ni" onclick="navTo('analytics')"><span class="nic">📈</span>Аналитика</div>
+      <div class="ns">Контент</div>
+      <div class="ni" onclick="navTo('content')"><span class="nic">✏️</span>Контент сайта</div>
+      <div class="ni" onclick="navTo('news')"><span class="nic">📰</span>Новости/Акции</div>
+      <div class="ni" onclick="navTo('tests')"><span class="nic">📝</span>Тесты</div>
+      <div class="ni" onclick="navTo('quiz')"><span class="nic">✈️</span>Квиз поступления</div>
+      <div class="ns">Интеграции</div>
+      <div class="ni" onclick="navTo('bitrix')"><span class="nic">🔗</span>Bitrix24</div>
+      <div class="ni" onclick="navTo('settings')"><span class="nic">⚙️</span>Настройки</div>
+      <div class="sbottom">
+        <div class="ghind">
+          <div class="ghidot" id="ghidot" style="background:var(--g300)"></div>
+          <div style="font-size:11px"><div style="font-weight:700;color:var(--g700)">GitHub</div><div style="color:var(--g400)" id="ghitxt">Не настроен</div></div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main" id="main">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="ph">
+          <div><h1>Dashboard</h1><p id="dashdate"></p></div>
+          <div class="phbtns">
+            <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 CSV</button>
+            <button class="btn btn-gold btn-sm" onclick="syncBitrix()">🔄 Bitrix24</button>
+            <button class="btn btn-primary btn-sm" onclick="pushToGithub()">☁️ Сохранить на сайт</button>
+          </div>
+        </div>
+        <div id="setup-area"></div>
+        <div class="sg">
+          <div class="sc blue"><div class="sl">Всего лидов</div><div class="sv" id="ds1">—</div><div class="sd" id="ds1d">загрузка...</div><div class="sic">👥</div></div>
+          <div class="sc green"><div class="sl">Сегодня</div><div class="sv" id="ds2">—</div><div class="sd">новых заявок</div><div class="sic">📥</div></div>
+          <div class="sc gold"><div class="sl">Тестов</div><div class="sv" id="ds3">—</div><div class="sd">пройдено</div><div class="sic">📝</div></div>
+          <div class="sc purple"><div class="sl">Квиз конверсия</div><div class="sv" id="ds4">—</div><div class="sd">квиз → лид</div><div class="sic">✈️</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 1fr 1.4fr;gap:12px">
+          <div class="card">
+            <div class="ch"><div class="ct">По типам</div></div>
+            <div id="tbreak"></div>
+          </div>
+          <div class="card">
+            <div class="ch"><div class="ct">7 дней</div></div>
+            <div class="bchart" id="dchart" style="height:60px"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;color:var(--g400)"><span>7 дн.</span><span>Сегодня</span></div>
+          </div>
+          <div class="card">
+            <div class="ch"><div class="ct">Последние заявки</div><button class="btn btn-ghost btn-sm" onclick="navTo('leads')">Все →</button></div>
+            <div id="drecent"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADS -->
+      <div class="page" id="page-leads">
+        <div class="ph">
+          <div><h1>Лиды и заявки</h1></div>
+          <div class="phbtns">
+            <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 CSV</button>
+            <button class="btn btn-gold btn-sm" onclick="syncBitrix()">🔄 Bitrix</button>
+            <button class="btn btn-success btn-sm" onclick="openAddLead()">+ Добавить</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab active" onclick="setLT('all',this)">Все <span id="tc-all"></span></div>
+          <div class="tab" onclick="setLT('new',this)">🔴 Новые</div>
+          <div class="tab" onclick="setLT('called',this)">📞 Звонок</div>
+          <div class="tab" onclick="setLT('enrolled',this)">✅ Записан</div>
+          <div class="tab" onclick="setLT('paid',this)">💳 Оплатил</div>
+          <div class="tab" onclick="setLT('studying',this)">🎓 Учится</div>
+        </div>
+        <div class="fb">
+          <input type="text" id="lsearch" placeholder="🔍 Поиск..." oninput="renderLeads()"/>
+          <select id="lfsrc" onchange="renderLeads()">
+            <option value="">Все источники</option>
+            <option>General English</option><option>IELTS</option><option>SAT</option>
+            <option>Kids</option><option>Квиз поступления</option>
+          </select>
+          <select id="lfdate" onchange="renderLeads()">
+            <option value="">Всё время</option>
+            <option value="today">Сегодня</option>
+            <option value="week">Неделя</option>
+            <option value="month">Месяц</option>
+          </select>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr><th><input type="checkbox" id="chkall" onchange="toggleAll(this)"/></th><th>Имя</th><th>Телефон</th><th>Источник</th><th>Результат</th><th>Страна</th><th>Дата</th><th>Статус</th><th>Действия</th></tr></thead>
+            <tbody id="ltbody"></tbody>
+          </table>
+        </div>
+        <div class="pag" id="lpag"></div>
+      </div>
+
+      <!-- ANALYTICS -->
+      <div class="page" id="page-analytics">
+        <div class="ph">
+          <div><h1>Аналитика</h1></div>
+          <select class="btn btn-outline btn-sm" id="aperiod" onchange="renderAnalytics()">
+            <option value="7">7 дней</option><option value="30" selected>30 дней</option><option value="90">3 мес.</option>
+          </select>
+        </div>
+        <div class="sg" id="astats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="card"><div class="ch"><div class="ct">Лиды по дням</div></div><div class="bchart" id="achart" style="height:90px"></div></div>
+          <div class="card"><div class="ch"><div class="ct">По типу теста</div></div><div id="atypes" style="margin-top:6px"></div></div>
+          <div class="card"><div class="ch"><div class="ct">Воронка</div></div><div id="afunnel" style="display:flex;gap:4px;align-items:flex-end;height:70px;margin-top:8px"></div></div>
+          <div class="card"><div class="ch"><div class="ct">Топ стран (квиз)</div></div><div id="acountries" style="margin-top:6px"></div></div>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="page" id="page-content">
+        <div class="ph">
+          <div><h1>Контент сайта</h1><p>Изменения публикуются на сайте после нажатия "Опубликовать"</p></div>
+          <div class="phbtns">
+            <button class="btn btn-success" onclick="saveContent()">💾 Сохранить</button>
+            <button class="btn btn-primary" onclick="publishContent()">🚀 Опубликовать на сайт</button>
+          </div>
+        </div>
+        <div class="cs">
+          <div class="cst">🏠 Hero — главный экран</div>
+          <div class="fg2">
+            <div class="fg full"><label>Заголовок (строка 1)</label><input type="text" id="c-h1" placeholder="Говорите по-английски."/></div>
+            <div class="fg full"><label>Выделенная часть</label><input type="text" id="c-h2" placeholder="лучшие вузы"/></div>
+            <div class="fg full"><label>Подзаголовок</label><textarea id="c-sub" style="min-height:55px"></textarea></div>
+            <div class="fg"><label>Студентов</label><input type="text" id="c-students"/></div>
+            <div class="fg"><label>Лет на рынке</label><input type="text" id="c-years"/></div>
+            <div class="fg"><label>Средний IELTS</label><input type="text" id="c-ielts"/></div>
+            <div class="fg"><label>Стран</label><input type="text" id="c-countries"/></div>
+          </div>
+        </div>
+        <div class="cs">
+          <div class="cst">💰 Цены</div>
+          <div id="prices-ed"></div>
+          <button class="btn btn-outline btn-sm" onclick="addPrice()" style="margin-top:8px">+ Добавить</button>
+        </div>
+        <div class="cs">
+          <div class="cst">📞 Контакты</div>
+          <div class="fg2">
+            <div class="fg"><label>Телефон</label><input type="text" id="c-phone"/></div>
+            <div class="fg"><label>Email</label><input type="email" id="c-email"/></div>
+            <div class="fg"><label>WhatsApp (номер)</label><input type="text" id="c-wa"/></div>
+            <div class="fg"><label>Instagram</label><input type="text" id="c-ig"/></div>
+          </div>
+        </div>
+        <div class="cs">
+          <div class="cst">🏢 Филиалы</div>
+          <div id="branches-ed"></div>
+        </div>
+      </div>
+
+      <!-- NEWS -->
+      <div class="page" id="page-news">
+        <div class="ph">
+          <div><h1>Новости и Акции</h1><p>Блок отображается на главной странице сайта</p></div>
+          <div class="phbtns">
+            <button class="btn btn-success" onclick="saveNews()">💾 Сохранить</button>
+            <button class="btn btn-primary" onclick="publishNews()">🚀 Опубликовать</button>
+            <button class="btn btn-outline btn-sm" onclick="addNewsItem()">+ Добавить</button>
+          </div>
+        </div>
+        <div id="news-list"></div>
+      </div>
+
+      <!-- TESTS -->
+      <div class="page" id="page-tests">
+        <div class="ph">
+          <div><h1>Редактор тестов</h1></div>
+          <div class="phbtns">
+            <button class="btn btn-outline btn-sm" onclick="exportTests()">📤 JSON</button>
+            <button class="btn btn-success btn-sm" onclick="saveTests()">💾 Сохранить</button>
+            <button class="btn btn-primary btn-sm" onclick="publishTests()">🚀 Опубликовать</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="tsel"></div>
+        <div style="display:grid;grid-template-columns:1fr 1.7fr;gap:14px">
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:12px;font-weight:700;color:var(--g700)" id="qcount">Вопросы (0)</div>
+              <button class="btn btn-primary btn-sm" onclick="addQuestion()">+ Вопрос</button>
+            </div>
+            <div id="qlist"></div>
+          </div>
+          <div class="card" id="qedit" style="display:none">
+            <div class="ch"><div class="ct">Редактирование</div><button class="btn btn-danger btn-xs" onclick="deleteQ()">🗑</button></div>
+            <div class="fg" style="margin-bottom:9px">
+              <label>Секция теста</label>
+              <div style="display:flex;gap:5px;flex-wrap:wrap" id="secchips"></div>
+            </div>
+            <div class="fg" style="margin-bottom:9px">
+              <label>Тип</label>
+              <select id="qtype" onchange="renderQEditor()"><option value="mc">Multiple Choice</option><option value="tfng">True/False/Not Given</option></select>
+            </div>
+            <div class="fg" style="margin-bottom:9px" id="pgroup">
+              <label>Пассаж (необязательно)</label>
+              <textarea id="qpassage" style="min-height:55px"></textarea>
+            </div>
+            <div class="fg" style="margin-bottom:11px">
+              <label>Вопрос *</label>
+              <textarea id="qtext" style="min-height:55px"></textarea>
+            </div>
+            <div id="qopts"></div>
+            <div class="fa">
+              <button class="btn btn-primary btn-sm" onclick="saveQ()">💾 Сохранить</button>
+              <button class="btn btn-outline btn-sm" onclick="cancelQ()">Отмена</button>
+            </div>
+          </div>
+          <div class="card" id="qph" style="display:flex;align-items:center;justify-content:center;min-height:160px;color:var(--g400);flex-direction:column;gap:8px">
+            <div style="font-size:28px;opacity:.3">📝</div>
+            <p style="font-size:12px">Выберите вопрос</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUIZ -->
+      <div class="page" id="page-quiz">
+        <div class="ph">
+          <div><h1>Квиз поступления</h1><p>7 вопросов о стране, бюджете, специальности</p></div>
+          <div class="phbtns">
+            <button class="btn btn-success btn-sm" onclick="saveQuiz()">💾 Сохранить</button>
+            <button class="btn btn-primary btn-sm" onclick="publishQuiz()">🚀 Опубликовать</button>
+          </div>
+        </div>
+        <div id="quiz-ed"></div>
+        <button class="btn btn-outline btn-sm" onclick="addQuizQ()" style="margin-top:8px">+ Вопрос</button>
+      </div>
+
+      <!-- BITRIX -->
+      <div class="page" id="page-bitrix">
+        <div class="ph">
+          <div><h1>Bitrix24</h1></div>
+          <button class="btn btn-primary btn-sm" onclick="testBitrix()">🧪 Проверить</button>
+        </div>
+        <div class="cs">
+          <div class="cst">🔗 Подключение</div>
+          <div class="fg2">
+            <div class="fg full"><label>Webhook URL (gscstudy.bitrix24.ru)</label><input type="text" id="bx-wh" placeholder="https://gscstudy.bitrix24.ru/rest/1/xxxxxxxx/" oninput="saveBx()"/></div>
+            <div class="fg"><label>ID менеджера</label><input type="text" id="bx-mgr" placeholder="1" style="max-width:80px" oninput="saveBx()"/></div>
+          </div>
+        </div>
+        <div class="cs">
+          <div class="cst">⚙️ Что отправлять</div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div style="font-weight:600;font-size:12px">Лиды с тестов</div><div style="font-size:11px;color:var(--g400)">Имя, телефон, тест, результат, уровень</div></div>
+              <label class="tg"><input type="checkbox" id="bx-t" checked onchange="saveBx()"><span class="tgs"></span></label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div style="font-weight:600;font-size:12px">Лиды с квиза</div><div style="font-size:11px;color:var(--g400)">Выбранные страны, ответы</div></div>
+              <label class="tg"><input type="checkbox" id="bx-q" checked onchange="saveBx()"><span class="tgs"></span></label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div style="font-weight:600;font-size:12px">Авто-задача менеджеру</div><div style="font-size:11px;color:var(--g400)">"Позвонить в течение 15 минут"</div></div>
+              <label class="tg"><input type="checkbox" id="bx-at" onchange="saveBx()"><span class="tgs"></span></label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div style="font-weight:600;font-size:12px">Результаты теста как комментарий</div><div style="font-size:11px;color:var(--g400)">Прикрепить детальный результат к лиду</div></div>
+              <label class="tg"><input type="checkbox" id="bx-rc" checked onchange="saveBx()"><span class="tgs"></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="bxresult" style="display:none;margin-top:12px">
+          <div class="ct" style="margin-bottom:7px">Результат проверки</div>
+          <pre id="bxrt" style="font-size:11px;color:var(--g600);background:var(--g50);padding:9px;border-radius:var(--r);overflow-x:auto;white-space:pre-wrap;font-family:monospace"></pre>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="ph"><div><h1>Настройки</h1></div></div>
+        <div class="cs">
+          <div class="cst">🐙 GitHub — хранилище данных</div>
+          <p style="font-size:12px;color:var(--g600);margin-bottom:14px;line-height:1.7">
+            Данные сайта хранятся как JSON файлы в GitHub репозитории.<br>
+            Нужен <strong>Personal Access Token</strong> с правами на <code>repo</code>.
+          </p>
+          <div class="fg2">
+            <div class="fg"><label>GitHub Owner (логин)</label><input type="text" id="gh-owner" placeholder="damirbolat-maker" oninput="saveGhSettings()"/></div>
+            <div class="fg"><label>Репозиторий</label><input type="text" id="gh-repo" placeholder="gsc-study-website" oninput="saveGhSettings()"/></div>
+            <div class="fg full"><label>Personal Access Token</label><input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" oninput="saveGhSettings()"/></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:7px">
+            <button class="btn btn-primary btn-sm" onclick="testGithub()">🔌 Проверить подключение</button>
+            <button class="btn btn-outline btn-sm" onclick="initDataFiles()">🏗️ Создать data/ файлы</button>
+          </div>
+          <div id="gh-result" style="margin-top:8px;font-size:11px;color:var(--g500)"></div>
+        </div>
+        <div class="cs">
+          <div class="cst">🔐 Как создать токен GitHub</div>
+          <div style="font-size:12px;color:var(--g600);line-height:1.8">
+            <div>1. Зайди на <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong></div>
+            <div>2. Нажми <strong>Generate new token (classic)</strong></div>
+            <div>3. Выбери срок действия — No expiration</div>
+            <div>4. Отметь <strong>repo</strong> (полный доступ к репозиторию)</div>
+            <div>5. Нажми Generate token и скопируй — он показывается один раз!</div>
+          </div>
+        </div>
+        <div class="cs">
+          <div class="cst">🔐 Пользователи</div>
+          <div id="users-list"></div>
+        </div>
+        <div class="cs">
+          <div class="cst">🗄️ Данные</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="exportAll()">📤 Экспорт JSON</button>
+            <button class="btn btn-outline btn-sm" onclick="importData()">📥 Импорт JSON</button>
+            <button class="btn btn-danger btn-sm" onclick="clearDemo()">🗑 Очистить демо-лиды</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- LEAD MODAL -->
+<div class="mb" id="lead-modal" onclick="if(event.target===this)closeM('lead-modal')">
+  <div class="md" style="max-width:540px">
+    <div class="mh"><h3 id="lmt">Редактировать лид</h3><div class="mx" onclick="closeM('lead-modal')">✕</div></div>
+    <div class="fg2">
+      <div class="fg"><label>Имя *</label><input type="text" id="lmname"/></div>
+      <div class="fg"><label>Телефон *</label><input type="tel" id="lmphone"/></div>
+      <div class="fg"><label>Email</label><input type="email" id="lmemail"/></div>
+      <div class="fg"><label>Возраст</label><input type="text" id="lmage"/></div>
+      <div class="fg"><label>Источник</label>
+        <select id="lmsrc"><option>General English</option><option>IELTS</option><option>SAT</option><option>Kids</option><option>Квиз поступления</option></select>
+      </div>
+      <div class="fg"><label>Статус</label>
+        <select id="lmstatus">
+          <option value="new">Новый</option><option value="called">Звонок</option>
+          <option value="enrolled">Записан</option><option value="paid">Оплатил</option>
+          <option value="studying">Обучается</option><option value="lost">Потерян</option>
+        </select>
+      </div>
+      <div class="fg"><label>Результат теста</label><input type="text" id="lmresult"/></div>
+      <div class="fg"><label>Страна (квиз)</label><input type="text" id="lmcountry"/></div>
+      <div class="fg full"><label>Комментарий</label><textarea id="lmcomment" style="min-height:45px"></textarea></div>
+    </div>
+    <div class="fa">
+      <button class="btn btn-primary btn-sm" onclick="saveLead()">💾 Сохранить</button>
+      <button class="btn btn-outline btn-sm" onclick="closeM('lead-modal')">Отмена</button>
+      <button class="btn btn-danger btn-sm" id="ldelbtn" onclick="deleteLead()" style="margin-left:auto">🗑 Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div class="twrap" id="twrap"></div>
+
+<script>
+/* ════════════════════════════════════════
+   КОНФИГУРАЦИЯ
+════════════════════════════════════════ */
+const ADMIN_USERS=[
+  {login:'admin',pass:'gsc2026',name:'Администратор',role:'owner'},
+  {login:'manager',pass:'manager123',name:'Менеджер',role:'manager'}
+];
+
+/* ════ STORAGE ════ */
+const LS={
+  get:(k,d=null)=>{try{const v=localStorage.getItem('gsc_'+k);return v?JSON.parse(v):d;}catch(e){return d;}},
+  set:(k,v)=>{try{localStorage.setItem('gsc_'+k,JSON.stringify(v));}catch(e){}}
+};
+
+/* ════ GITHUB API ════ */
+let GH={owner:'',repo:'',token:''};
+function loadGhSettings(){
+  GH.owner=localStorage.getItem('gsc_gh_owner')||'';
+  GH.repo=localStorage.getItem('gsc_gh_repo')||'gsc-study-website';
+  GH.token=localStorage.getItem('gsc_gh_token')||'';
+  const o=document.getElementById('gh-owner');const r=document.getElementById('gh-repo');const t=document.getElementById('gh-token');
+  if(o)o.value=GH.owner;if(r)r.value=GH.repo;if(t)t.value=GH.token;
+  updateGhStatus();
+}
+function saveGhSettings(){
+  GH.owner=document.getElementById('gh-owner')?.value.trim()||GH.owner;
+  GH.repo=document.getElementById('gh-repo')?.value.trim()||GH.repo;
+  GH.token=document.getElementById('gh-token')?.value.trim()||GH.token;
+  localStorage.setItem('gsc_gh_owner',GH.owner);
+  localStorage.setItem('gsc_gh_repo',GH.repo);
+  localStorage.setItem('gsc_gh_token',GH.token);
+  updateGhStatus();
+}
+function updateGhStatus(){
+  const ok=!!(GH.owner&&GH.token);
+  const dot=document.getElementById('gh-dot');
+  const txt=document.getElementById('gh-txt');
+  const st=document.getElementById('gh-st');
+  const idot=document.getElementById('ghidot');
+  const itxt=document.getElementById('ghitxt');
+  if(ok){
+    [dot].forEach(d=>{if(d){d.className='ghsdot';d.style.background='var(--green)';}});
+    if(txt)txt.textContent='GitHub OK';
+    if(st)st.className='gh-status ok';
+    if(idot)idot.style.background='var(--green)';
+    if(itxt)itxt.textContent=GH.owner+'/'+GH.repo;
+  } else {
+    [dot].forEach(d=>{if(d){d.className='ghsdot';d.style.background='var(--g300)';}});
+    if(txt)txt.textContent='GitHub';
+    if(st)st.className='gh-status off';
+    if(idot)idot.style.background='var(--g300)';
+    if(itxt)itxt.textContent='Не настроен';
+  }
+}
+
+async function ghGetFile(path){
+  if(!GH.token)return null;
+  try{
+    const r=await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${path}`,{
+      headers:{'Authorization':'token '+GH.token,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(!r.ok)return null;
+    const d=await r.json();
+    return {content:JSON.parse(atob(d.content.replace(/\n/g,''))),sha:d.sha};
+  }catch(e){return null;}
+}
+
+async function ghPutFile(path,content,message){
+  if(!GH.token){toast('Настрой GitHub Token в Настройках','error');return false;}
+  try{
+    // Get current SHA
+    const existing=await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${path}`,{
+      headers:{'Authorization':'token '+GH.token}
+    });
+    let sha='';
+    if(existing.ok){const d=await existing.json();sha=d.sha||'';}
+    const body={message,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),branch:'main'};
+    if(sha)body.sha=sha;
+    const r=await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${path}`,{
+      method:'PUT',
+      headers:{'Authorization':'token '+GH.token,'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    return r.ok;
+  }catch(e){toast('Ошибка GitHub: '+e.message,'error');return false;}
+}
+
+async function testGithub(){
+  const res=document.getElementById('gh-result');
+  if(!GH.token||!GH.owner){if(res)res.textContent='Заполни Owner и Token';toast('Заполни настройки GitHub','error');return;}
+  if(res)res.textContent='Проверяем...';
+  try{
+    const r=await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}`,{
+      headers:{'Authorization':'token '+GH.token}
+    });
+    const d=await r.json();
+    if(r.ok){
+      if(res)res.innerHTML='✅ Подключено! Репозиторий: <strong>'+d.full_name+'</strong> · '+d.stargazers_count+' stars';
+      toast('✅ GitHub подключён!','success');
+      updateGhStatus();
+    } else {
+      if(res)res.textContent='❌ Ошибка: '+d.message;
+      toast('Ошибка: '+d.message,'error');
+    }
+  }catch(e){if(res)res.textContent='Ошибка сети: '+e.message;}
+}
+
+async function initDataFiles(){
+  if(!GH.token){toast('Настрой GitHub Token','error');return;}
+  const files={
+    'data/content.json':LS.get('content',getDefaultContent()),
+    'data/leads.json':LS.get('leads',[]),
+    'data/tests.json':LS.get('tests',getDefaultTests()),
+    'data/news.json':LS.get('news',getDefaultNews()),
+    'data/quiz.json':LS.get('quiz',getDefaultQuiz())
+  };
+  let ok=0;
+  for(const[path,content] of Object.entries(files)){
+    const r=await ghPutFile(path,content,'Init '+path);
+    if(r)ok++;
+  }
+  toast('Создано '+ok+'/'+Object.keys(files).length+' файлов','success');
+}
+
+/* ════ AUTH ════ */
+let currentUser=null,editingLeadId=null,leadFilter='all',leadsPage=1,currentTestKey='General English',editingQIdx=null;
+const PER=15;
+
+function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  const user=ADMIN_USERS.find(x=>x.login===u&&x.pass===p);
+  if(!user){document.getElementById('lerr').style.display='block';return;}
+  currentUser=user;LS.set('session',{login:u,name:user.name,ts:Date.now()});
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').classList.add('show');
+  document.getElementById('tbu').textContent=user.name;
+  document.getElementById('tbav').textContent=user.name[0];
+  initApp();
+}
+function doLogout(){LS.set('session',null);location.reload();}
+function checkSession(){
+  const s=LS.get('session');
+  if(s&&s.ts&&Date.now()-s.ts<12*3600*1000){
+    const user=ADMIN_USERS.find(x=>x.login===s.login);
+    if(user){currentUser=user;document.getElementById('login').style.display='none';document.getElementById('app').classList.add('show');document.getElementById('tbu').textContent=user.name;document.getElementById('tbav').textContent=user.name[0];initApp();}
+  }
+}
+
+/* ════ INIT ════ */
+function initApp(){
+  initLocalData();loadGhSettings();
+  document.getElementById('dashdate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  renderDashboard();renderSetup();updateNewBadge();renderBitrix();
+}
+
+function initLocalData(){
+  if(!LS.get('leads'))LS.set('leads',genDemoLeads());
+  if(!LS.get('content'))LS.set('content',getDefaultContent());
+  if(!LS.get('tests'))LS.set('tests',getDefaultTests());
+  if(!LS.get('news'))LS.set('news',getDefaultNews());
+  if(!LS.get('quiz'))LS.set('quiz',getDefaultQuiz());
+}
+
+function genDemoLeads(){
+  const names=['Айдана Серик','Нурлан Бекова','Жанна Мұхамед','Алия Темир','Данияр Асан','Зарина Нур','Бекзат Сейт','Айгерим Бол','Арман Хасен','Сания Мурат'];
+  const srcs=['General English','IELTS','SAT','Kids','Квиз поступления'];
+  const sts=['new','new','new','called','enrolled','paid'];
+  return names.map((name,i)=>{
+    const d=new Date();d.setDate(d.getDate()-Math.floor(Math.random()*12));
+    return{id:'lead_'+i,name,phone:'+7 7'+String(Math.floor(10000000+Math.random()*89999999)),email:'',age:['18–25','13–17','25+'][i%3],source:srcs[i%5],status:sts[Math.floor(Math.random()*sts.length)],result:srcs[i%5]==='Квиз поступления'?'':Math.floor(10+Math.random()*15)+'/25',country:i%3===0?['Германия','UK','США','ОАЭ'][i%4]:'',comment:'',date:d.toISOString(),bitrix_id:null};
+  });
+}
+
+/* ════ NAVIGATION ════ */
+function navTo(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+p+"'"))n.classList.add('active');});
+  document.getElementById('main').scrollTop=0;
+  const map={dashboard:renderDashboard,leads:renderLeads,analytics:renderAnalytics,content:renderContent,news:renderNews,tests:renderTestEditor,quiz:renderQuizEditor,bitrix:renderBitrix,settings:renderSettings};
+  map[p]?.();
+}
+
+/* ════ SETUP BANNER ════ */
+function renderSetup(){
+  const el=document.getElementById('setup-area');
+  if(GH.owner&&GH.token){el.innerHTML='';return;}
+  el.innerHTML=`<div class="setup">
+    <h2>⚡ Подключи GitHub для публикации изменений</h2>
+    <p>Без настройки данные сохраняются только в браузере. После подключения все изменения публикуются на сайт одной кнопкой.</p>
+    <div class="sstep"><div class="ssn">1</div><span>Зайди на <strong>github.com → Settings → Developer settings → Personal access tokens</strong></span></div>
+    <div class="sstep"><div class="ssn">2</div><span>Создай токен с правом <strong>repo</strong></span></div>
+    <div class="sstep"><div class="ssn">3</div><span>Введи данные в <strong>Настройки → GitHub</strong> или прямо здесь:</span></div>
+    <div class="sir">
+      <input class="si" id="qs-owner" placeholder="GitHub логин (damirbolat-maker)"/>
+      <input class="si" id="qs-token" placeholder="ghp_xxxxxxxxxxxxxxx (Token)"/>
+      <button class="btn btn-primary btn-sm" onclick="quickGhConnect()">Подключить</button>
+    </div>
+  </div>`;
+}
+function quickGhConnect(){
+  const o=document.getElementById('qs-owner')?.value.trim();
+  const t=document.getElementById('qs-token')?.value.trim();
+  if(!o||!t){toast('Введи логин и токен','error');return;}
+  GH.owner=o;GH.token=t;GH.repo='gsc-study-website';
+  localStorage.setItem('gsc_gh_owner',o);localStorage.setItem('gsc_gh_token',t);localStorage.setItem('gsc_gh_repo','gsc-study-website');
+  document.getElementById('gh-owner').value=o;document.getElementById('gh-token').value=t;
+  updateGhStatus();renderSetup();toast('GitHub подключён!','success');
+}
+
+/* ════ DASHBOARD ════ */
+function renderDashboard(){
+  const leads=LS.get('leads',[]);
+  const today=new Date().toDateString();
+  const todayL=leads.filter(l=>new Date(l.date).toDateString()===today);
+  const tests=leads.filter(l=>l.source&&!l.source.includes('Квиз'));
+  const quiz=leads.filter(l=>l.source?.includes('Квиз'));
+  document.getElementById('ds1').textContent=leads.length;
+  document.getElementById('ds1d').textContent='▲ '+leads.filter(l=>isThisWeek(l.date)).length+' за неделю';
+  document.getElementById('ds2').textContent=todayL.length;
+  document.getElementById('ds3').textContent=tests.length;
+  document.getElementById('ds4').textContent=quiz.length?Math.round(quiz.filter(l=>l.phone).length/quiz.length*100)+'%':'0%';
+  // Test breakdown
+  const types=['General English','IELTS','SAT','Kids','Квиз поступления'];
+  const cols=['#3498DB','#27AE60','#F39C12','#8E44AD','#E67E22'];
+  document.getElementById('tbreak').innerHTML=types.map((t,i)=>{
+    const cnt=leads.filter(l=>l.source===t).length;
+    const pct=leads.length?Math.round(cnt/leads.length*100):0;
+    return`<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${cols[i]};flex-shrink:0"></div>
+      <div style="flex:1;font-size:11px;color:var(--g600);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.split(' ')[0]}</div>
+      <div style="flex:2;height:5px;background:var(--g100);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${cols[i]};border-radius:3px"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--g700);min-width:18px;text-align:right">${cnt}</div>
+    </div>`;
+  }).join('');
+  // 7-day chart
+  const chart=document.getElementById('dchart');chart.innerHTML='';
+  const maxH=48;
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const cnt=leads.filter(l=>new Date(l.date).toDateString()===d.toDateString()).length;
+    const h=Math.max(4,cnt?Math.round(cnt/Math.max(...Array.from({length:7},(_,j)=>{const dd=new Date();dd.setDate(dd.getDate()-(6-j));return leads.filter(l=>new Date(l.date).toDateString()===dd.toDateString()).length;}))*maxH):4);
+    const bar=document.createElement('div');bar.className='bbar';bar.style.height=h+'px';bar.title=d.toLocaleDateString('ru')+': '+cnt;chart.appendChild(bar);
+  }
+  // Recent
+  const recent=[...leads].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  document.getElementById('drecent').innerHTML=recent.length?recent.map(l=>`
+    <div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--g100);cursor:pointer" onclick="openEditLead('${l.id}')">
+      <div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--g900)">${escH(l.name)}</div><div style="font-size:11px;color:var(--g400)">${fmtDate(l.date)}</div></div>
+      <span class="pill ${srcColor(l.source)}" style="align-self:flex-start">${escH(l.source||'—')}</span>
+    </div>`).join(''):'<div class="te">Нет заявок</div>';
+}
+
+/* ════ LEADS ════ */
+let filteredLeads=[];
+function setLT(s,el){leadFilter=s;leadsPage=1;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el?.classList.add('active');renderLeads();}
+function renderLeads(){
+  let leads=LS.get('leads',[]);
+  const search=document.getElementById('lsearch')?.value.toLowerCase()||'';
+  const src=document.getElementById('lfsrc')?.value||'';
+  const dFilter=document.getElementById('lfdate')?.value||'';
+  const today=new Date().toDateString();
+  const weekAgo=new Date();weekAgo.setDate(weekAgo.getDate()-7);
+  const monthAgo=new Date();monthAgo.setDate(monthAgo.getDate()-30);
+  if(leadFilter!=='all')leads=leads.filter(l=>l.status===leadFilter);
+  if(search)leads=leads.filter(l=>l.name?.toLowerCase().includes(search)||l.phone?.includes(search));
+  if(src)leads=leads.filter(l=>l.source===src);
+  if(dFilter==='today')leads=leads.filter(l=>new Date(l.date).toDateString()===today);
+  else if(dFilter==='week')leads=leads.filter(l=>new Date(l.date)>=weekAgo);
+  else if(dFilter==='month')leads=leads.filter(l=>new Date(l.date)>=monthAgo);
+  leads.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  filteredLeads=leads;
+  const all=LS.get('leads',[]);
+  document.getElementById('tc-all').textContent='('+all.length+')';
+  const total=leads.length,pages=Math.ceil(total/PER);
+  const slice=leads.slice((leadsPage-1)*PER,leadsPage*PER);
+  const tbody=document.getElementById('ltbody');
+  if(!slice.length){tbody.innerHTML='<tr><td colspan="9" class="te">Нет заявок</td></tr>';}
+  else{
+    tbody.innerHTML=slice.map(l=>`<tr>
+      <td><input type="checkbox" class="lchk" data-id="${l.id}"/></td>
+      <td><strong style="cursor:pointer;color:var(--sky);font-size:12px" onclick="openEditLead('${l.id}')">${escH(l.name)}</strong><br><span style="font-size:10px;color:var(--g400)">${escH(l.age||'')}</span></td>
+      <td><a href="tel:${l.phone}" style="color:var(--sky);font-size:12px">${escH(l.phone)}</a></td>
+      <td><span class="pill ${srcColor(l.source)}">${escH(l.source||'—')}</span></td>
+      <td style="font-size:11px;max-width:120px">${escH(l.result||'—')}</td>
+      <td style="font-size:11px">${l.country||'—'}</td>
+      <td style="font-size:11px;color:var(--g400);white-space:nowrap">${fmtDate(l.date)}</td>
+      <td><select class="pill ${statusColor(l.status)}" style="border:none;background:transparent;cursor:pointer;font-size:10px;font-weight:700;outline:none" onchange="quickStatus('${l.id}',this.value)">
+        ${['new','called','enrolled','paid','studying','lost'].map(s=>`<option value="${s}" ${l.status===s?'selected':''}>${statusLabel(s)}</option>`).join('')}
+      </select></td>
+      <td><div style="display:flex;gap:4px">
+        <button class="btn btn-ghost btn-xs" onclick="openEditLead('${l.id}')">✏️</button>
+        <a href="https://wa.me/${(l.phone||'').replace(/\D/g,'')}" target="_blank" class="btn btn-ghost btn-xs" style="text-decoration:none">💬</a>
+        <button class="btn btn-ghost btn-xs" onclick="pushLeadToBitrix('${l.id}')">🔗</button>
+      </div></td>
+    </tr>`).join('');
+  }
+  // Pagination
+  const pag=document.getElementById('lpag');
+  if(pages<=1){pag.innerHTML='';return;}
+  let h=`<span style="font-size:11px;color:var(--g500);margin-right:4px">${total} заявок</span>`;
+  for(let i=1;i<=pages;i++)h+=`<div class="pb2 ${i===leadsPage?'active':''}" onclick="leadsPage=${i};renderLeads()">${i}</div>`;
+  pag.innerHTML=h;
+  updateNewBadge();
+}
+function quickStatus(id,status){
+  const leads=LS.get('leads',[]);const l=leads.find(x=>x.id===id);
+  if(l){l.status=status;LS.set('leads',leads);}
+  toast('Статус обновлён','success');updateNewBadge();
+}
+function updateNewBadge(){
+  const cnt=LS.get('leads',[]).filter(l=>l.status==='new').length;
+  const badge=document.getElementById('tb-badge');const nb=document.getElementById('nb');
+  if(cnt>0){if(badge){badge.style.display='flex';badge.querySelector('span').textContent=cnt;}if(nb){nb.style.display='block';nb.textContent=cnt;}}
+  else{if(badge)badge.style.display='none';if(nb)nb.style.display='none';}
+}
+function openEditLead(id){
+  editingLeadId=id;
+  const l=LS.get('leads',[]).find(x=>x.id===id)||{};
+  document.getElementById('lmt').textContent=id?'Редактировать лид':'Новый лид';
+  document.getElementById('lmname').value=l.name||'';document.getElementById('lmphone').value=l.phone||'';
+  document.getElementById('lmemail').value=l.email||'';document.getElementById('lmage').value=l.age||'';
+  document.getElementById('lmsrc').value=l.source||'General English';
+  document.getElementById('lmstatus').value=l.status||'new';
+  document.getElementById('lmresult').value=l.result||'';document.getElementById('lmcountry').value=l.country||'';
+  document.getElementById('lmcomment').value=l.comment||'';
+  document.getElementById('ldelbtn').style.display=id?'inline-flex':'none';
+  openM('lead-modal');
+}
+function openAddLead(){editingLeadId=null;openEditLead(null);}
+function saveLead(){
+  const leads=LS.get('leads',[]);
+  const data={name:document.getElementById('lmname').value.trim(),phone:document.getElementById('lmphone').value.trim(),email:document.getElementById('lmemail').value.trim(),age:document.getElementById('lmage').value.trim(),source:document.getElementById('lmsrc').value,status:document.getElementById('lmstatus').value,result:document.getElementById('lmresult').value.trim(),country:document.getElementById('lmcountry').value.trim(),comment:document.getElementById('lmcomment').value.trim()};
+  if(!data.name||!data.phone){toast('Заполни имя и телефон','error');return;}
+  if(editingLeadId){const idx=leads.findIndex(x=>x.id===editingLeadId);if(idx>=0)Object.assign(leads[idx],data);}
+  else{leads.unshift({id:'lead_'+Date.now(),date:new Date().toISOString(),bitrix_id:null,...data});}
+  LS.set('leads',leads);closeM('lead-modal');renderLeads();renderDashboard();
+  toast(editingLeadId?'Лид обновлён':'Лид добавлен','success');
+  // Auto-sync to GitHub if configured
+  if(GH.token)autoSaveLeads();
+}
+function deleteLead(){
+  if(!confirm('Удалить лид?'))return;
+  LS.set('leads',LS.get('leads',[]).filter(x=>x.id!==editingLeadId));
+  closeM('lead-modal');renderLeads();renderDashboard();toast('Лид удалён','info');
+}
+async function autoSaveLeads(){
+  const ok=await ghPutFile('data/leads.json',LS.get('leads',[]),'Update leads');
+  if(!ok)console.warn('Auto-save leads failed');
+}
+function exportCSV(){
+  const leads=filteredLeads.length?filteredLeads:LS.get('leads',[]);
+  const hdr=['ID','Имя','Телефон','Email','Возраст','Источник','Статус','Результат','Страна','Дата'];
+  const rows=leads.map(l=>[l.id,l.name,l.phone,l.email||'',l.age||'',l.source,statusLabel(l.status),l.result||'',l.country||'',fmtDate(l.date)].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv='\uFEFF'+[hdr.join(','),...rows].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='gsc_leads_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('CSV экспортирован ('+leads.length+' строк)','success');
+}
+
+/* ════ ANALYTICS ════ */
+function renderAnalytics(){
+  const leads=LS.get('leads',[]);
+  const days=parseInt(document.getElementById('aperiod')?.value||'30');
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-days);
+  const period=leads.filter(l=>new Date(l.date)>=cutoff);
+  const enrolled=period.filter(l=>['enrolled','paid','studying'].includes(l.status)).length;
+  const conv=period.length?Math.round(enrolled/period.length*100):0;
+  document.getElementById('astats').innerHTML=`
+    <div class="sc blue"><div class="sl">За период</div><div class="sv">${period.length}</div><div class="sd">лидов</div><div class="sic">📊</div></div>
+    <div class="sc green"><div class="sl">Конверсия</div><div class="sv">${conv}%</div><div class="sd">лид → запись</div><div class="sic">🎯</div></div>
+    <div class="sc gold"><div class="sl">Записалось</div><div class="sv">${enrolled}</div><div class="sd">студентов</div><div class="sic">✅</div></div>
+    <div class="sc red"><div class="sl">Потеряно</div><div class="sv">${period.filter(l=>l.status==='lost').length}</div><div class="sd">лидов</div><div class="sic">❌</div></div>`;
+  // Days chart
+  const chart=document.getElementById('achart');chart.innerHTML='';
+  const buckets=Math.min(days,20);
+  const maxC=Math.max(...Array.from({length:buckets},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(buckets-1-i));return period.filter(l=>new Date(l.date).toDateString()===d.toDateString()).length;}),1);
+  for(let i=buckets-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const cnt=period.filter(l=>new Date(l.date).toDateString()===d.toDateString()).length;const bar=document.createElement('div');bar.className='bbar';bar.style.height=Math.max(4,cnt/maxC*88)+'px';bar.title=d.toLocaleDateString('ru')+': '+cnt;chart.appendChild(bar);}
+  // Types
+  const types=['General English','IELTS','SAT','Kids','Квиз поступления'];
+  const cols=['#3498DB','#27AE60','#F39C12','#8E44AD','#E67E22'];
+  document.getElementById('atypes').innerHTML=types.map((t,i)=>{const cnt=period.filter(l=>l.source===t).length;const pct=period.length?Math.round(cnt/period.length*100):0;return`<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><div style="width:7px;height:7px;border-radius:50%;background:${cols[i]}"></div><div style="flex:1;font-size:11px;color:var(--g600)">${t.replace('General ','').replace(' поступления','')}</div><div style="flex:2;height:5px;background:var(--g100);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${cols[i]};border-radius:3px"></div></div><div style="font-size:11px;font-weight:700;width:24px;text-align:right">${cnt}</div></div>`;}).join('');
+  // Funnel
+  const stages=[{l:'Лиды',c:period.length,col:'#3498DB'},{l:'Звонок',c:period.filter(l=>['called','enrolled','paid','studying'].includes(l.status)).length,col:'#2980B9'},{l:'Запись',c:period.filter(l=>['enrolled','paid','studying'].includes(l.status)).length,col:'#27AE60'},{l:'Оплата',c:period.filter(l=>['paid','studying'].includes(l.status)).length,col:'#229954'}];
+  const mxf=Math.max(...stages.map(s=>s.c),1);
+  document.getElementById('afunnel').innerHTML=stages.map(s=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:12px;font-weight:800;color:var(--g900)">${s.c}</div><div style="width:100%;height:${Math.max(10,s.c/mxf*60)}px;background:${s.col};border-radius:3px;opacity:.85"></div><div style="font-size:10px;color:var(--g500)">${s.l}</div></div>`).join('<div style="color:var(--g300);font-size:16px;align-self:center;padding-bottom:18px">›</div>');
+  // Countries
+  const cmap={};period.filter(l=>l.country).forEach(l=>{cmap[l.country]=(cmap[l.country]||0)+1;});
+  const sorted=Object.entries(cmap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const mxc=Math.max(...sorted.map(([,n])=>n),1);
+  document.getElementById('acountries').innerHTML=sorted.length?sorted.map(([c,n])=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="min-width:80px;font-size:11px;font-weight:600;color:var(--g700)">${c}</span><div style="flex:1;height:8px;background:var(--g100);border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.round(n/mxc*100)}%;background:var(--gold);border-radius:4px"></div></div><span style="font-size:11px;font-weight:700;min-width:18px;text-align:right">${n}</span></div>`).join(''):'<div class="te">Нет данных квиза</div>';
+}
+
+/* ════ CONTENT ════ */
+function renderContent(){
+  const c=LS.get('content',getDefaultContent());
+  document.getElementById('c-h1').value=c.h1_1||'';document.getElementById('c-h2').value=c.h1_2||'';
+  document.getElementById('c-sub').value=c.hero_sub||'';
+  document.getElementById('c-students').value=c.students||'';document.getElementById('c-years').value=c.years||'';
+  document.getElementById('c-ielts').value=c.ielts||'';document.getElementById('c-countries').value=c.countries||'';
+  document.getElementById('c-phone').value=c.phone||'';document.getElementById('c-email').value=c.email||'';
+  document.getElementById('c-wa').value=c.wa||'';document.getElementById('c-ig').value=c.ig||'';
+  renderPricesEditor(c.prices||[]);renderBranchesEditor(c.branches||[]);
+}
+function renderPricesEditor(prices){
+  document.getElementById('prices-ed').innerHTML=prices.map((p,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--g100)">
+      <input type="text" id="pr-name-${i}" value="${escH(p.name)}" placeholder="Название" style="flex:2;padding:6px 8px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;outline:none"/>
+      <input type="text" id="pr-fmt-${i}" value="${escH(p.format)}" placeholder="Формат" style="flex:1.5;padding:6px 8px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;outline:none"/>
+      <input type="text" id="pr-dur-${i}" value="${escH(p.duration)}" placeholder="Кол-во" style="flex:0.8;padding:6px 8px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;outline:none"/>
+      <input type="text" id="pr-price-${i}" value="${escH(p.price)}" placeholder="Цена" style="flex:1;padding:6px 8px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;outline:none;font-weight:700"/>
+      <button class="btn btn-ghost btn-xs" style="color:var(--red)" onclick="delPrice(${i})">✕</button>
+    </div>`).join('');
+}
+function renderBranchesEditor(branches){
+  document.getElementById('branches-ed').innerHTML=branches.map((b,i)=>`
+    <div style="background:var(--g50);border-radius:var(--r);padding:11px;margin-bottom:8px">
+      <div class="fg2">
+        <div class="fg"><label>Название</label><input type="text" id="br-name-${i}" value="${escH(b.name)}"/></div>
+        <div class="fg"><label>Адрес</label><input type="text" id="br-addr-${i}" value="${escH(b.addr)}"/></div>
+        <div class="fg full"><label>Часы</label><input type="text" id="br-hours-${i}" value="${escH(b.hours)}"/></div>
+      </div>
+    </div>`).join('');
+}
+function addPrice(){const c=LS.get('content',getDefaultContent());c.prices.push({name:'',format:'',duration:'',price:''});LS.set('content',c);renderPricesEditor(c.prices);}
+function delPrice(i){const c=LS.get('content',getDefaultContent());c.prices.splice(i,1);LS.set('content',c);renderPricesEditor(c.prices);}
+function saveContent(){
+  const c=LS.get('content',getDefaultContent());
+  c.h1_1=document.getElementById('c-h1').value;c.h1_2=document.getElementById('c-h2').value;
+  c.hero_sub=document.getElementById('c-sub').value;c.students=document.getElementById('c-students').value;
+  c.years=document.getElementById('c-years').value;c.ielts=document.getElementById('c-ielts').value;
+  c.countries=document.getElementById('c-countries').value;c.phone=document.getElementById('c-phone').value;
+  c.email=document.getElementById('c-email').value;c.wa=document.getElementById('c-wa').value;c.ig=document.getElementById('c-ig').value;
+  c.prices.forEach((_,i)=>{const n=document.getElementById('pr-name-'+i);const f=document.getElementById('pr-fmt-'+i);const d=document.getElementById('pr-dur-'+i);const p=document.getElementById('pr-price-'+i);if(n)c.prices[i]={name:n.value,format:f?.value||'',duration:d?.value||'',price:p?.value||''};});
+  c.branches.forEach((_,i)=>{const n=document.getElementById('br-name-'+i);const a=document.getElementById('br-addr-'+i);const h=document.getElementById('br-hours-'+i);if(n)c.branches[i]={name:n.value,addr:a?.value||'',hours:h?.value||''};});
+  LS.set('content',c);toast('Контент сохранён','success');
+}
+async function publishContent(){
+  saveContent();
+  const ok=await ghPutFile('data/content.json',LS.get('content',{}),'Update site content');
+  toast(ok?'✅ Опубликовано на сайт!':'❌ Ошибка публикации',ok?'success':'error');
+}
+
+/* ════ NEWS ════ */
+function renderNews(){
+  const news=LS.get('news',getDefaultNews());
+  document.getElementById('news-list').innerHTML=news.map((item,i)=>`
+    <div class="newsitem">
+      <div class="newsitem-hd">
+        <div class="newsitem-type">
+          ${['news','promo','event','course'].map(t=>`<span class="ntype ${item.type===t?'sel':''}" onclick="setNewsType(${i},'${t}',this)">${{news:'📰 Новость',promo:'🎁 Акция',event:'🎓 Событие',course:'📚 Курс'}[t]}</span>`).join('')}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <label class="tg" style="margin-right:4px"><input type="checkbox" ${item.active?'checked':''} onchange="toggleNewsActive(${i},this.checked)"><span class="tgs"></span></label>
+          <button class="btn btn-danger btn-xs" onclick="deleteNewsItem(${i})">🗑</button>
+        </div>
+      </div>
+      <div class="fg2">
+        <div class="fg full"><label>Заголовок</label><input type="text" id="ni-title-${i}" value="${escH(item.title)}" placeholder="Открытый урок по IELTS"/></div>
+        <div class="fg full"><label>Описание</label><input type="text" id="ni-desc-${i}" value="${escH(item.desc||'')}" placeholder="Краткое описание..."/></div>
+        <div class="fg"><label>Дата / дедлайн</label><input type="text" id="ni-date-${i}" value="${escH(item.date||'')}" placeholder="22 марта, 15:00"/></div>
+        <div class="fg"><label>Текст кнопки</label><input type="text" id="ni-btn-${i}" value="${escH(item.btnText||'')}" placeholder="Записаться →"/></div>
+        <div class="fg"><label>Цвет</label>
+          <select id="ni-color-${i}">
+            ${['blue','gold','green','red','purple'].map(c=>`<option value="${c}" ${item.color===c?'selected':''}>${{blue:'Синий',gold:'Золотой',green:'Зелёный',red:'Красный',purple:'Фиолетовый'}[c]}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg"><label>Иконка (emoji)</label><input type="text" id="ni-icon-${i}" value="${escH(item.icon||'🎓')}" style="max-width:70px"/></div>
+      </div>
+    </div>`).join('');
+}
+function setNewsType(i,type,el){
+  el.closest('.newsitem-type').querySelectorAll('.ntype').forEach(n=>n.classList.remove('sel'));
+  el.classList.add('sel');
+  const news=LS.get('news',getDefaultNews());news[i].type=type;LS.set('news',news);
+}
+function toggleNewsActive(i,val){const news=LS.get('news',getDefaultNews());news[i].active=val;LS.set('news',news);}
+function addNewsItem(){
+  const news=LS.get('news',getDefaultNews());
+  news.unshift({id:'news_'+Date.now(),type:'news',title:'',desc:'',date:'',btnText:'Подробнее →',color:'blue',icon:'🎓',active:true});
+  LS.set('news',news);renderNews();
+}
+function deleteNewsItem(i){const news=LS.get('news',getDefaultNews());news.splice(i,1);LS.set('news',news);renderNews();}
+function saveNews(){
+  const news=LS.get('news',getDefaultNews());
+  news.forEach((_,i)=>{
+    const t=document.getElementById('ni-title-'+i);const d=document.getElementById('ni-desc-'+i);
+    const dt=document.getElementById('ni-date-'+i);const b=document.getElementById('ni-btn-'+i);
+    const c=document.getElementById('ni-color-'+i);const ic=document.getElementById('ni-icon-'+i);
+    if(t){news[i].title=t.value;news[i].desc=d?.value||'';news[i].date=dt?.value||'';news[i].btnText=b?.value||'';news[i].color=c?.value||'blue';news[i].icon=ic?.value||'🎓';}
+  });
+  LS.set('news',news);toast('Новости сохранены','success');
+}
+async function publishNews(){
+  saveNews();
+  const ok=await ghPutFile('data/news.json',LS.get('news',[]),'Update news');
+  toast(ok?'✅ Новости опубликованы!':'❌ Ошибка',ok?'success':'error');
+}
+
+/* ════ TESTS ════ */
+function renderTestEditor(){
+  const tests=LS.get('tests',getDefaultTests());
+  const sel=document.getElementById('tsel');
+  sel.innerHTML=Object.keys(tests).map(k=>`<button class="btn btn-sm ${k===currentTestKey?'btn-primary':'btn-outline'}" onclick="selectTest('${k}')">${k}</button>`).join('');
+  renderQList();
+}
+function selectTest(k){currentTestKey=k;editingQIdx=null;renderTestEditor();}
+function renderQList(){
+  const tests=LS.get('tests',getDefaultTests());
+  const t=tests[currentTestKey];if(!t){return;}
+  let allQ=[],lastSec='';
+  t.sections.forEach(sec=>sec.questions.forEach((q,qi)=>allQ.push({q,sec:sec.name,gIdx:allQ.length})));
+  document.getElementById('qcount').textContent='Вопросы ('+allQ.length+')';
+  let html='';
+  allQ.forEach(({q,sec,gIdx})=>{
+    if(sec!==lastSec){html+=`<div style="font-size:9px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;padding:9px 3px 3px">${sec}</div>`;lastSec=sec;}
+    html+=`<div class="qi ${editingQIdx===gIdx?'active':''}" onclick="selectQ(${gIdx})">
+      <div class="qnum">Q${gIdx+1} · ${q.type==='tfng'?'T/F/NG':'MC'}</div>
+      <div class="qprev">${escH(q.text.substring(0,65))}${q.text.length>65?'…':''}</div>
+    </div>`;
+  });
+  document.getElementById('qlist').innerHTML=html||'<div class="te">Нет вопросов</div>';
+}
+function selectQ(gIdx){
+  editingQIdx=gIdx;renderQList();
+  const tests=LS.get('tests',getDefaultTests());
+  const t=tests[currentTestKey];
+  let allQ=[];
+  t.sections.forEach((sec,si)=>sec.questions.forEach((q,qi)=>allQ.push({q,si,qi})));
+  const {q,si}=allQ[gIdx];
+  document.getElementById('qedit').style.display='block';
+  document.getElementById('qph').style.display='none';
+  document.getElementById('qtype').value=q.type||'mc';
+  document.getElementById('qpassage').value=q.passage||'';
+  document.getElementById('qtext').value=q.text||'';
+  // Section chips
+  document.getElementById('secchips').innerHTML=t.sections.map((sec,i)=>`<span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid ${i===si?'var(--sky)':'var(--g200)'};background:${i===si?'var(--sky-l)':'#fff'};color:${i===si?'var(--sky)':'var(--g500)'};transition:var(--t)" onclick="setQSec(this,${i})" data-si="${i}">${sec.icon||''} ${sec.name}</span>`).join('');
+  renderQEditor(q);
+}
+function setQSec(el,i){document.querySelectorAll('#secchips span').forEach(s=>{s.style.borderColor='var(--g200)';s.style.background='#fff';s.style.color='var(--g500)';});el.style.borderColor='var(--sky)';el.style.background='var(--sky-l)';el.style.color='var(--sky)';}
+function renderQEditor(q){
+  if(!q)q={type:document.getElementById('qtype').value,opts:['','','',''],ans:0};
+  const s=document.getElementById('qopts');
+  if(q.type==='tfng'){
+    s.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--g600);margin-bottom:7px">Правильный ответ:</div>
+      <div style="display:flex;gap:7px">
+        ${['TRUE','FALSE','NOT GIVEN'].map(v=>`<button class="btn btn-sm ${q.ans===v?'btn-success':'btn-outline'}" onclick="setTFNGAns('${v}',this)">${v}</button>`).join('')}
+      </div>`;
+  } else {
+    s.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--g600);margin-bottom:7px">Варианты (✓ = правильный):</div>
+      <div id="opts-list">
+        ${(q.opts||['','','','']).map((o,i)=>`<div class="or">
+          <div style="width:20px;font-size:11px;font-weight:700;color:var(--g400);text-align:center;flex-shrink:0">${'ABCDE'[i]}</div>
+          <input type="text" value="${escH(o)}" placeholder="Вариант ${'ABCDE'[i]}"/>
+          <div class="ocb ${q.ans===i?'sel':''}" onclick="setAns(${i},this)">✓</div>
+          <div class="odb" onclick="delOpt(this)">✕</div>
+        </div>`).join('')}
+      </div>
+      <button class="btn btn-outline btn-xs" onclick="addOpt()" style="margin-top:6px">+ Вариант</button>`;
+  }
+}
+function setAns(i,el){document.querySelectorAll('.ocb').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
+function setTFNGAns(v,btn){document.querySelectorAll('#qopts .btn').forEach(b=>b.className='btn btn-sm btn-outline');btn.className='btn btn-sm btn-success';}
+function addOpt(){const list=document.getElementById('opts-list');const i=list.children.length;const row=document.createElement('div');row.className='or';row.innerHTML=`<div style="width:20px;font-size:11px;font-weight:700;color:var(--g400);text-align:center;flex-shrink:0">${'ABCDE'[i]||i}</div><input type="text" placeholder="Вариант"/><div class="ocb" onclick="setAns(${i},this)">✓</div><div class="odb" onclick="delOpt(this)">✕</div>`;list.appendChild(row);}
+function delOpt(el){el.closest('.or').remove();}
+function addQuestion(){editingQIdx=-1;document.getElementById('qedit').style.display='block';document.getElementById('qph').style.display='none';const tests=LS.get('tests',getDefaultTests());const t=tests[currentTestKey];document.getElementById('qtype').value='mc';document.getElementById('qpassage').value='';document.getElementById('qtext').value='';document.getElementById('secchips').innerHTML=t.sections.map((sec,i)=>`<span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid ${i===0?'var(--sky)':'var(--g200)'};background:${i===0?'var(--sky-l)':'#fff'};color:${i===0?'var(--sky)':'var(--g500)'};transition:var(--t)" onclick="setQSec(this,${i})" data-si="${i}">${sec.icon||''} ${sec.name}</span>`).join('');renderQEditor({type:'mc',opts:['','','',''],ans:0});}
+function saveQ(){
+  const tests=LS.get('tests',getDefaultTests());const t=tests[currentTestKey];
+  const type=document.getElementById('qtype').value;const text=document.getElementById('qtext').value.trim();
+  if(!text){toast('Введи текст вопроса','error');return;}
+  const passage=document.getElementById('qpassage').value.trim();
+  const activeSec=document.querySelector('#secchips span[style*="var(--sky)"]');
+  const si=activeSec?parseInt(activeSec.dataset.si)||0:0;
+  let q={type,text,passage};
+  if(type==='tfng'){const ab=document.querySelector('#qopts .btn-success');q.ans=ab?ab.textContent.trim():'TRUE';q.opts=[];}
+  else{const rows=document.querySelectorAll('.or');q.opts=Array.from(rows).map(r=>r.querySelector('input').value.trim());const corr=document.querySelector('.ocb.sel');q.ans=corr?parseInt(corr.closest('.or').querySelector('input').dataset?.idx||Array.from(document.querySelectorAll('.ocb')).indexOf(corr)):0;const allCorr=document.querySelectorAll('.ocb');q.ans=0;allCorr.forEach((c,i)=>{if(c.classList.contains('sel'))q.ans=i;});}
+  if(editingQIdx===-1||editingQIdx===null){t.sections[si].questions.push(q);}
+  else{let gIdx=0;outer:for(let s=0;s<t.sections.length;s++){for(let qi=0;qi<t.sections[s].questions.length;qi++){if(gIdx===editingQIdx){t.sections[s].questions[qi]=q;break outer;}gIdx++;}}}
+  LS.set('tests',tests);editingQIdx=null;document.getElementById('qedit').style.display='none';document.getElementById('qph').style.display='flex';renderQList();toast('Вопрос сохранён','success');
+}
+function deleteQ(){
+  if(!confirm('Удалить?'))return;
+  const tests=LS.get('tests',getDefaultTests());const t=tests[currentTestKey];
+  let gIdx=0;outer:for(let s=0;s<t.sections.length;s++){for(let qi=0;qi<t.sections[s].questions.length;qi++){if(gIdx===editingQIdx){t.sections[s].questions.splice(qi,1);break outer;}gIdx++;}}
+  LS.set('tests',tests);editingQIdx=null;document.getElementById('qedit').style.display='none';document.getElementById('qph').style.display='flex';renderQList();toast('Вопрос удалён','info');
+}
+function cancelQ(){editingQIdx=null;document.getElementById('qedit').style.display='none';document.getElementById('qph').style.display='flex';renderQList();}
+function saveTests(){LS.set('tests',LS.get('tests',getDefaultTests()));toast('Тесты сохранены','success');}
+async function publishTests(){saveTests();const ok=await ghPutFile('data/tests.json',LS.get('tests',{}),'Update tests');toast(ok?'✅ Тесты опубликованы!':'❌ Ошибка',ok?'success':'error');}
+function exportTests(){const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(LS.get('tests',{}),null,2));a.download='gsc_tests.json';a.click();}
+
+/* ════ QUIZ ════ */
+function renderQuizEditor(){
+  const quiz=LS.get('quiz',getDefaultQuiz());
+  document.getElementById('quiz-ed').innerHTML=quiz.map((q,i)=>`
+    <div style="background:#fff;border:1px solid var(--g200);border-radius:var(--r);padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--g700)">Вопрос ${i+1}</div>
+        <button class="btn btn-danger btn-xs" onclick="delQuizQ(${i})">✕</button>
+      </div>
+      <div class="fg2">
+        <div class="fg full"><label>Текст вопроса</label><input type="text" id="qq-${i}" value="${escH(q.q)}" placeholder="Вопрос..."/></div>
+        <div class="fg full"><label>Подсказка</label><input type="text" id="qh-${i}" value="${escH(q.hint||'')}" placeholder="Необязательная подсказка"/></div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--g600);text-transform:uppercase;margin-bottom:7px">Варианты</div>
+        ${q.opts.map((o,j)=>`<div style="display:flex;gap:7px;margin-bottom:6px;align-items:center">
+          <span style="font-size:16px;flex-shrink:0">${o.emoji||'•'}</span>
+          <input type="text" id="qo-${i}-${j}-txt" value="${escH(o.text)}" placeholder="Текст" style="flex:2;padding:5px 8px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;outline:none"/>
+          <input type="text" id="qo-${i}-${j}-sub" value="${escH(o.sub||'')}" placeholder="Подпись" style="flex:1.5;padding:5px 8px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;outline:none"/>
+          <input type="text" id="qo-${i}-${j}-em" value="${escH(o.emoji||'')}" placeholder="🌍" style="width:44px;padding:5px 6px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:12px;outline:none;text-align:center"/>
+          <input type="text" id="qo-${i}-${j}-val" value="${escH(o.val||'')}" placeholder="val" style="width:60px;padding:5px 6px;border:1.5px solid var(--g200);border-radius:var(--r);font-size:11px;outline:none;font-family:monospace"/>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function addQuizQ(){const q=LS.get('quiz',getDefaultQuiz());q.push({q:'Новый вопрос',hint:'',opts:[{emoji:'',text:'',sub:'',val:'opt1'},{emoji:'',text:'',sub:'',val:'opt2'},{emoji:'',text:'',sub:'',val:'opt3'},{emoji:'',text:'',sub:'',val:'opt4'}]});LS.set('quiz',q);renderQuizEditor();}
+function delQuizQ(i){const q=LS.get('quiz',getDefaultQuiz());q.splice(i,1);LS.set('quiz',q);renderQuizEditor();}
+function saveQuiz(){
+  const q=LS.get('quiz',getDefaultQuiz());
+  q.forEach((_,i)=>{
+    const t=document.getElementById('qq-'+i);const h=document.getElementById('qh-'+i);
+    if(t){q[i].q=t.value;q[i].hint=h?.value||'';}
+    q[i].opts.forEach((_,j)=>{
+      const txt=document.getElementById(`qo-${i}-${j}-txt`);const sub=document.getElementById(`qo-${i}-${j}-sub`);
+      const em=document.getElementById(`qo-${i}-${j}-em`);const val=document.getElementById(`qo-${i}-${j}-val`);
+      if(txt){q[i].opts[j].text=txt.value;q[i].opts[j].sub=sub?.value||'';q[i].opts[j].emoji=em?.value||'';q[i].opts[j].val=val?.value||'';}
+    });
+  });
+  LS.set('quiz',q);toast('Квиз сохранён','success');
+}
+async function publishQuiz(){saveQuiz();const ok=await ghPutFile('data/quiz.json',LS.get('quiz',[]),'Update quiz');toast(ok?'✅ Квиз опубликован!':'❌ Ошибка',ok?'success':'error');}
+
+/* ════ BITRIX ════ */
+function renderBitrix(){
+  const bx=LS.get('bx',{});
+  document.getElementById('bx-wh').value=bx.webhook||'';
+  document.getElementById('bx-mgr').value=bx.manager||'1';
+  document.getElementById('bx-t').checked=bx.sendTests!==false;
+  document.getElementById('bx-q').checked=bx.sendQuiz!==false;
+  document.getElementById('bx-at').checked=!!bx.autoTask;
+  document.getElementById('bx-rc').checked=bx.sendResult!==false;
+}
+function saveBx(){
+  LS.set('bx',{webhook:document.getElementById('bx-wh').value,manager:document.getElementById('bx-mgr').value,sendTests:document.getElementById('bx-t').checked,sendQuiz:document.getElementById('bx-q').checked,autoTask:document.getElementById('bx-at').checked,sendResult:document.getElementById('bx-rc').checked});
+}
+async function testBitrix(){
+  const bx=LS.get('bx',{});
+  if(!bx.webhook){toast('Введи Webhook URL','error');return;}
+  const el=document.getElementById('bxresult');const pre=document.getElementById('bxrt');
+  el.style.display='block';pre.textContent='Проверяем...';
+  try{
+    const r=await fetch(bx.webhook+'profile.json',{method:'GET'});
+    const d=await r.json();
+    if(d.result){pre.textContent='✅ ПОДКЛЮЧЕНО\n\n'+JSON.stringify(d.result,null,2);toast('Bitrix24 подключён!','success');}
+    else{pre.textContent='❌ ОШИБКА\n\n'+JSON.stringify(d,null,2);toast('Ошибка подключения','error');}
+  }catch(e){pre.textContent='❌ Ошибка сети: '+e.message+'\n\nПроверь CORS настройки Bitrix24';}
+}
+async function syncBitrix(){
+  const bx=LS.get('bx',{});
+  if(!bx.webhook||!bx.webhook.includes('bitrix24')){toast('Настрой Bitrix24 сначала','error');return;}
+  const leads=LS.get('leads',[]).filter(l=>!l.bitrix_id);
+  if(!leads.length){toast('Все лиды уже синхронизированы','info');return;}
+  toast(`Отправляем ${leads.length} лидов...`,'info');
+  let sent=0;
+  for(const l of leads){
+    try{
+      const r=await fetch(bx.webhook+'crm.lead.add.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{TITLE:`[${l.source}] ${l.name}`,NAME:l.name,PHONE:[{VALUE:l.phone,VALUE_TYPE:'MOBILE'}],SOURCE_ID:'WEB',SOURCE_DESCRIPTION:`${l.source} | Результат: ${l.result||'—'} | Страна: ${l.country||'—'}`,ASSIGNED_BY_ID:parseInt(bx.manager)||1,COMMENTS:l.comment||''}})});
+      const d=await r.json();
+      if(d.result){l.bitrix_id=d.result;sent++;const all=LS.get('leads',[]);const idx=all.findIndex(x=>x.id===l.id);if(idx>=0){all[idx].bitrix_id=d.result;LS.set('leads',all);}}
+    }catch(e){}
+  }
+  toast(`Синхронизировано ${sent}/${leads.length} лидов`,'success');
+}
+async function pushLeadToBitrix(id){
+  const bx=LS.get('bx',{});if(!bx.webhook||!bx.webhook.includes('bitrix24')){toast('Настрой Bitrix24','error');return;}
+  const l=LS.get('leads',[]).find(x=>x.id===id);if(!l)return;
+  try{const r=await fetch(bx.webhook+'crm.lead.add.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{TITLE:`[${l.source}] ${l.name}`,NAME:l.name,PHONE:[{VALUE:l.phone,VALUE_TYPE:'MOBILE'}],SOURCE_ID:'WEB',SOURCE_DESCRIPTION:`${l.source} | ${l.result||''}`,ASSIGNED_BY_ID:parseInt(bx.manager)||1}})});const d=await r.json();if(d.result){l.bitrix_id=d.result;const all=LS.get('leads',[]);const idx=all.findIndex(x=>x.id===id);if(idx>=0){all[idx].bitrix_id=d.result;LS.set('leads',all);}toast('Лид отправлен в Bitrix (ID:'+d.result+')','success');}else toast('Ошибка: '+JSON.stringify(d.error_description||d),'error');}catch(e){toast('Ошибка сети','error');}
+}
+
+/* ════ PUBLISH ALL ════ */
+async function pushToGithub(){
+  if(!GH.token){toast('Настрой GitHub Token','error');return;}
+  toast('Публикуем данные на сайт...','info');
+  const files=[['data/content.json',LS.get('content',{})],['data/leads.json',LS.get('leads',[])],['data/news.json',LS.get('news',[])],['data/tests.json',LS.get('tests',{})],['data/quiz.json',LS.get('quiz',[])]];
+  let ok=0;
+  for(const[path,data] of files){const r=await ghPutFile(path,data,'Admin: update '+path.split('/')[1]);if(r)ok++;}
+  toast(ok===files.length?'✅ Все данные опубликованы!':'⚠️ Опубликовано '+ok+'/'+files.length,ok===files.length?'success':'warning');
+}
+
+/* ════ SETTINGS ════ */
+function renderSettings(){
+  loadGhSettings();
+  document.getElementById('users-list').innerHTML=ADMIN_USERS.map(u=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--g100)">
+      <div><div style="font-weight:600;font-size:13px">${u.name}</div><div style="font-size:11px;color:var(--g400)">${u.login} · ${u.role==='owner'?'Владелец':'Менеджер'}</div></div>
+      <span class="pill ${u.role==='owner'?'pp':'pb'}">${u.role==='owner'?'Владелец':'Менеджер'}</span>
+    </div>`).join('');
+}
+function exportAll(){const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({leads:LS.get('leads',[]),content:LS.get('content',{}),news:LS.get('news',[]),tests:LS.get('tests',{}),quiz:LS.get('quiz',[])},null,2));a.download='gsc_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();}
+function importData(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.leads)LS.set('leads',d.leads);if(d.content)LS.set('content',d.content);if(d.news)LS.set('news',d.news);if(d.tests)LS.set('tests',d.tests);if(d.quiz)LS.set('quiz',d.quiz);toast('Данные импортированы','success');renderDashboard();}catch(e){toast('Ошибка импорта','error');}};r.readAsText(f);};i.click();}
+function clearDemo(){if(!confirm('Удалить демо-лиды?'))return;LS.set('leads',[]);renderLeads();renderDashboard();toast('Демо-данные удалены','info');}
+
+/* ════ DEFAULTS ════ */
+function getDefaultContent(){return{h1_1:'Говорите по-английски.',h1_2:'лучшие вузы',hero_sub:'IELTS, SAT, General English и полное сопровождение поступления в ТОП-вузы 18+ стран.',students:'15 000+',years:'15 лет',ielts:'7.0+',countries:'18+',phone:'+7 700 127 77 88',email:'info@gscenter.kz',wa:'77718080828',ig:'@gscstudy.qaz',prices:[{name:'General English',format:'Групповые 3×/нед',duration:'12 зан.',price:'54 000 ₸'},{name:'IELTS Light',format:'Групповые 3×/нед',duration:'12 зан.',price:'90 000 ₸'},{name:'IELTS Intensive',format:'Групповые 5×/нед',duration:'20 зан.',price:'150 000 ₸'},{name:'SAT Prep',format:'Групповые 4×/нед',duration:'16 зан.',price:'152 000 ₸'},{name:'Китайский язык',format:'Групповые 3×/нед',duration:'12 зан.',price:'48 600 ₸'},{name:'IELTS (индив.)',format:'Индивидуально',duration:'1 зан.',price:'19 500 ₸'},{name:'SAT (индив.)',format:'Индивидуально',duration:'1 зан.',price:'19 500 ₸'}],branches:[{name:'Астана — Улы Дала',addr:'пр. Улы Дала 41/6',hours:'Пн–Пт 10:00–21:00'},{name:'Астана — Сыганак',addr:'ул. Сыганак 15',hours:'Пн–Пт 10:00–21:00'},{name:'Астана — Сарайшык',addr:'ул. Сарайшык 34',hours:'Пн–Пт 10:00–21:00'},{name:'Алматы — Сейфуллина',addr:'пр. Сейфуллина 574/1 к3',hours:'Пн–Пт 10:00–21:00'}]};}
+function getDefaultNews(){return[{id:'n1',type:'event',title:'Открытый урок IELTS',desc:'Бесплатное занятие для тех кто хочет узнать о подготовке',date:'22 марта, 15:00',btnText:'Записаться →',color:'blue',icon:'🎓',active:true},{id:'n2',type:'promo',title:'Скидка 10% на первый месяц',desc:'При записи на любой курс до конца марта',date:'до 31 марта',btnText:'Узнать подробнее →',color:'gold',icon:'🎁',active:true},{id:'n3',type:'news',title:'Набор на летние программы',desc:'Языковые лагеря в UK, Ирландии, ОАЭ. Осталось 8 мест.',date:'Лето 2026',btnText:'Смотреть программы →',color:'green',icon:'✈️',active:true}];}
+function getDefaultTests(){return{'General English':{sections:[{name:'Grammar & Vocabulary',icon:'💬',color:'var(--green)',colorL:'var(--green-l)',questions:[{type:'mc',text:'The weather was so bad that we had to ___ the trip.',opts:['put up','call off','give out','take over'],ans:1,passage:''},{type:'mc',text:'If I ___ earlier, I wouldn\'t have missed the bus.',opts:['would get up','got up','get up','had got up'],ans:3,passage:''},{type:'mc',text:'She\'s very good ___ dealing with difficult clients.',opts:['in','at','with','for'],ans:1,passage:''}]}]},'IELTS':{sections:[{name:'Reading',icon:'📖',color:'var(--sky)',colorL:'var(--sky-l)',questions:[{type:'tfng',text:'Children with good self-control are likely to do well at school later on.',opts:[],ans:'TRUE',passage:"She found that children with greater self-control solved problems more quickly. 'Children with good self-control are known to be likely to do well at school later on.'"},{type:'mc',text:'Which best summarizes the main idea?',opts:['AI in Science Fiction','AI Robots in Industry','Scientific Feasibility of AI','History of Robotics'],ans:0,passage:'Artificial intelligence has long captured the imaginations of science fiction writers.'}]},{name:'Use of English',icon:'✍️',color:'var(--purple)',colorL:'#F3E5F5',questions:[{type:'mc',text:'Choose the best linking phrase to add contrast:',opts:['Therefore','In other words','However','Firstly'],ans:2,passage:''}]}]},'SAT':{sections:[{name:'Verbal',icon:'📝',color:'var(--gold)',colorL:'var(--gold-l)',questions:[{type:'mc',text:'Former astronaut Ellen Ochoa ___ that humans will someday need to live elsewhere.',opts:['demands','speculates','doubts','establishes'],ans:1,passage:''}]},{name:'Math',icon:'📐',color:'var(--mid)',colorL:'var(--sky-l)',questions:[{type:'mc',text:'What is 10% of 470?',opts:['37','47','423','460'],ans:1,passage:''},{type:'mc',text:'4x + 6 = 18. Which equation has the same solution?',opts:['4x=108','4x=24','4x=12','4x=3'],ans:2,passage:''}]}]},'Kids':{sections:[{name:'Basic English',icon:'🧒',color:'var(--purple)',colorL:'#F3E5F5',questions:[{type:'mc',text:'What colour is the sky?',opts:['Red','Blue','Green','Yellow'],ans:1,passage:''},{type:'mc',text:"The opposite of 'big' is:",opts:['tall','fat','small','long'],ans:2,passage:''}]}]}};}
+function getDefaultQuiz(){return[{q:'В какую страну ты хочешь поступать?',hint:'Можно выбрать один вариант',opts:[{emoji:'🇺🇸',text:'США или Канада',sub:'Топ-мировые университеты',val:'us'},{emoji:'🇬🇧',text:'Великобритания',sub:'Russell Group',val:'uk'},{emoji:'🇩🇪',text:'Германия или Австрия',sub:'Почти бесплатно',val:'de'},{emoji:'🌍',text:'Ещё не решил',sub:'Помоги выбрать!',val:'open'}]},{q:'Какой у тебя бюджет на обучение в год?',hint:'Учитывай обучение + проживание',opts:[{emoji:'💸',text:'до $10 000',sub:'Германия, Чехия, Корея',val:'low'},{emoji:'💰',text:'$10 000–$25 000',sub:'Нидерланды, ОАЭ',val:'mid'},{emoji:'🏦',text:'$25 000–$50 000',sub:'UK, Канада',val:'high'},{emoji:'💎',text:'Более $50 000',sub:'США топ, Швейцария',val:'premium'}]},{q:'Какая специальность тебя интересует?',hint:'Это поможет подобрать вузы',opts:[{emoji:'💻',text:'IT / Computer Science',sub:'Software, AI, Cyber',val:'it'},{emoji:'📊',text:'Бизнес / Финансы',sub:'Management, Finance',val:'biz'},{emoji:'⚙️',text:'Инженерия',sub:'Engineering, Energy',val:'eng'},{emoji:'🎨',text:'Дизайн / Архитектура',sub:'Architecture, UX',val:'art'}]}];}
+
+/* ════ HELPERS ════ */
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+function toggleAll(cb){document.querySelectorAll('.lchk').forEach(c=>c.checked=cb.checked);}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(iso){if(!iso)return'—';const d=new Date(iso);const now=new Date();const diff=Math.floor((now-d)/86400000);if(diff===0)return'Сегодня '+d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});if(diff===1)return'Вчера';if(diff<7)return diff+' дн. назад';return d.toLocaleDateString('ru',{day:'numeric',month:'short'});}
+function isThisWeek(iso){const d=new Date(iso);const w=new Date();w.setDate(w.getDate()-7);return d>=w;}
+function srcColor(src){if(!src)return'pgr';if(src.includes('IELTS'))return'pb';if(src.includes('SAT'))return'pgo';if(src.includes('General'))return'pg';if(src.includes('Kids'))return'pp';if(src.includes('Квиз'))return'po';return'pgr';}
+function statusColor(s){return{new:'pr',called:'po',enrolled:'pb',paid:'pg',studying:'pg',lost:'pgr'}[s]||'pgr';}
+function statusLabel(s){return{new:'🔴 Новый',called:'📞 Звонок',enrolled:'✅ Записан',paid:'💳 Оплатил',studying:'🎓 Учится',lost:'❌ Потерян'}[s]||s;}
+function toast(msg,type='info'){const w=document.getElementById('twrap');const t=document.createElement('div');t.className='toast '+type;const ic={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};t.innerHTML=`<span>${ic[type]||'•'}</span>${escH(msg)}`;w.appendChild(t);setTimeout(()=>{t.style.animation='none';t.style.opacity='0';t.style.transform='translateX(14px)';setTimeout(()=>t.remove(),300);},3500);}
+
+/* Start */
+checkSession();
+</script>
+</body>
+</html>
