@@ -1,0 +1,32 @@
+[
+  {
+    "id": "u1",
+    "name": "University of Edinburgh",
+    "country": "UK",
+    "city": "Edinburg",
+    "flag": "🇬🇧",
+    "ranking": 22,
+    "ranking_system": "QS 2025",
+    "logo_color": "#003865",
+    "programs": [
+      "Business",
+      "Computer Science",
+      "Engineering",
+      "Medicine",
+      "Law"
+    ],
+    "tuition_min": 23000,
+    "tuition_max": 34000,
+    "currency": "GBP",
+    "language": "English",
+    "ielts_min": 6.5,
+    "gpa_min": 3.5,
+    "deadline": "Jan 25, 2026",
+    "duration": "3 года",
+    "description": "Один из старейших университетов Великобритании, входящий в элитную группу Russell Group.",
+    "tags": ["Russell Group", "Research", "Top-25"],
+    "scholarship": true,
+    "website": "https://ed.ac.uk",
+    "active": true
+  }
+]
