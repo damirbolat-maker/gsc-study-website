@@ -585,7 +585,7 @@ function finishTest(){
     try {
       await fetch('https://alqzuuuaxqzwrcytrpvm.supabase.co/rest/v1/test_results', {
         method:'POST',
-        headers:{'apikey':'sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_','Authorization':'Bearer sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_','Content-Type':'application/json'},
+        headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y','Content-Type':'application/json'},
         body:JSON.stringify({name:_cName||'',phone:_cPhone||'',test_type:ST.type,test_name:test.name,score:score,total:total,level:String(level)})
       });
     }catch(e){
@@ -597,7 +597,7 @@ function finishTest(){
       try {
         await fetch('https://alqzuuuaxqzwrcytrpvm.supabase.co/rest/v1/leads', {
           method:'POST',
-          headers:{'apikey':'sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_','Authorization':'Bearer sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_','Content-Type':'application/json'},
+          headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y','Content-Type':'application/json'},
           body:JSON.stringify({name:_cName||'',phone:_cPhone,course:'Тест: '+test.name+' → '+String(level),source:'Тест уровня',status:'new'})
         });
       }catch(e){}
