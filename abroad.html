@@ -1679,106 +1679,6 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
 })();
 </script>
 
-<script>
-/* ══ GSC CMS LOADER v3 ══ */
-(function() {
-  document.addEventListener('DOMContentLoaded', function() {
-    var PFX = 'gsc_';
-    function get(key, def) {
-      try { var v = localStorage.getItem(PFX + key); return v !== null ? JSON.parse(v) : def; }
-      catch(e) { return def; }
-    }
-
-    /* Offices */
-    var offices = get('offices', null);
-    var og = document.querySelector('.offices-grid');
-    if (og && offices && offices.length) {
-      og.innerHTML = offices.map(function(o) {
-        return '<div class="office-card' + (o.main ? ' office-main' : '') + '">'
-          + '<div class="office-city">' + o.city + '</div>'
-          + '<div class="office-name">' + o.name + '</div>'
-          + '<div class="office-addr">📍 ' + o.addr + '</div>'
-          + '<div class="office-hrs">' + o.hrs + '</div>'
-          + '</div>';
-      }).join('');
-    }
-
-    /* Reviews */
-    var reviews = get('google_reviews', null);
-    var rg = document.getElementById('reviews-grid');
-    if (rg && reviews && reviews.length) {
-      rg.innerHTML = reviews.map(function(r) {
-        return '<div class="review-card">'
-          + '<div class="rv-head"><div class="rv-av" style="background:' + r.color + '">' + r.avatar + '</div>'
-          + '<div><div class="rv-name">' + r.name + '</div><div class="rv-date">' + r.date + '</div></div></div>'
-          + '<div class="rv-stars">★★★★★</div>'
-          + '<p class="rv-text">' + r.text + '</p>'
-          + (r.badge ? '<div class="rv-badge">' + r.badge + '</div>' : '')
-          + '</div>';
-      }).join('');
-    }
-
-    /* Promo slides */
-    var promos = get('promo_slides', null);
-    var pt = document.getElementById('pt');
-    if (pt && promos && promos.length) {
-      pt.innerHTML = promos.map(function(p, i) {
-        return '<a href="' + (p.href || '#') + '" class="pc-card" style="background:' + (p.bg || '#2563EB') + '">'
-          + '<div class="pc-tag">' + p.tag + '</div>'
-          + '<div class="pc-ey">' + p.ey + '</div>'
-          + '<div class="pc-title">' + p.title + '</div>'
-          + '<div class="pc-desc">' + p.sub + '</div>'
-          + '<div class="pc-cta">' + p.cta + '</div>'
-          + '</a>';
-      }).join('');
-    }
-
-    /* Contacts */
-    var C = get('content', {});
-    if (C.phone) {
-      document.querySelectorAll('a[href^="tel:"]').forEach(function(a) {
-        a.href = 'tel:' + C.phone.replace(/[^\d+]/g, '');
-        a.textContent = C.phone;
-      });
-    }
-    if (C.email) {
-      document.querySelectorAll('a[href^="mailto:"]').forEach(function(a) {
-        a.href = 'mailto:' + C.email;
-        a.textContent = C.email;
-      });
-    }
-    if (C.wa) {
-      document.querySelectorAll('a[href*="wa.me"]').forEach(function(a) {
-        a.href = a.href.replace(/wa\.me\/\d+/, 'wa.me/' + C.wa.replace(/[^\d]/g, ''));
-      });
-    }
-
-    /* Hero image */
-    var imgs = get('images', {});
-    if (imgs.hero) {
-      var hi = document.querySelector('.hero-img, .hero-photo');
-      if (hi) { hi.tagName === 'IMG' ? hi.src = imgs.hero : hi.style.backgroundImage = 'url(' + imgs.hero + ')'; }
-    }
-
-    /* Page-specific text overrides (abroad / courses) */
-    var path = location.pathname;
-    if (path.indexOf('abroad') > -1) {
-      var ah = document.querySelector('.page-hero-h');
-      var as = document.querySelector('.page-hero-sub');
-      if (ah && C.abroad_h) ah.textContent = C.abroad_h;
-      if (as && C.abroad_sub) as.textContent = C.abroad_sub;
-    }
-    if (path.indexOf('courses') > -1) {
-      var ch = document.querySelector('.page-hero-h');
-      var cs = document.querySelector('.page-hero-sub');
-      if (ch && C.courses_h) ch.textContent = C.courses_h;
-      if (cs && C.courses_sub) cs.textContent = C.courses_sub;
-    }
-  });
-})();
-</script>
-
-
 <!-- ══════════════════════════════════════════════════════════════
      GSC INLINE TEST ENGINE  v1.0
      Inject once per page. Shows contact form → test → result
@@ -2386,6 +2286,166 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
 })();
 </script>
 
+<script>
+/* ══ GSC FRONTEND LOADER v3 — Supabase powered ══ */
+(function() {
+  var SUPABASE_URL = 'https://alqzuuuaxqzwrcytrpvm.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_';
+
+  async function sbGet(table, params) {
+    params = params || '';
+    try {
+      const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + params, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      return res.ok ? res.json() : [];
+    } catch(e) { return []; }
+  }
+
+  /* Fallback to localStorage if Supabase not configured */
+  var useLocal = (SUPABASE_URL === 'https://alqzuuuaxqzwrcytrpvm.supabase.co');
+
+  function lsGet(key, def) {
+    try { var v=localStorage.getItem('gsc_'+key); return v!==null?JSON.parse(v):def; }
+    catch(e) { return def; }
+  }
+
+  document.addEventListener('DOMContentLoaded', async function() {
+    if (useLocal) {
+      /* ── FALLBACK: localStorage mode ── */
+      var C = lsGet('content', {});
+      applyContent(C);
+      var offices = lsGet('offices', null);
+      if (offices) renderOffices(offices);
+      var reviews = lsGet('google_reviews', null);
+      if (reviews) renderReviews(reviews);
+      var promos = lsGet('promo_slides', null);
+      if (promos) renderPromo(promos);
+      var imgs = lsGet('images', {});
+      if (imgs.hero) applyHero(imgs.hero);
+    } else {
+      /* ── SUPABASE mode ── */
+      var [offRows, rvRows, prRows] = await Promise.all([
+        sbGet('offices', '?order=sort_order'),
+        sbGet('reviews', '?is_active=eq.true&order=sort_order'),
+        sbGet('promo_slides', '?order=sort_order'),
+      ]);
+      var contentRows = await sbGet('content');
+      var C = {};
+      contentRows.forEach(function(r) { C[r.key] = r.value; });
+      applyContent(C);
+      if (offRows.length) renderOffices(offRows.map(function(o) {
+        return { city:o.city, name:o.name, addr:o.addr, hrs:o.hrs, main:o.is_main };
+      }));
+      if (rvRows.length) renderReviews(rvRows.map(function(r) {
+        return { name:r.name, avatar:r.avatar, color:r.color, date:r.date_label, text:r.text, badge:r.badge };
+      }));
+      if (prRows.length) renderPromo(prRows.map(function(p) {
+        return { tag:p.tag, ey:p.ey, title:p.title, sub:p.sub, cta:p.cta, href:p.href||'#', bg:p.bg };
+      }));
+    }
+  });
+
+  function applyContent(C) {
+    var path = location.pathname;
+    if (C.phone) document.querySelectorAll('a[href^="tel:"]').forEach(function(a){a.href='tel:'+C.phone.replace(/[^\d+]/g,'');a.textContent=C.phone;});
+    if (C.email) document.querySelectorAll('a[href^="mailto:"]').forEach(function(a){a.href='mailto:'+C.email;a.textContent=C.email;});
+    if (C.wa) document.querySelectorAll('a[href*="wa.me"]').forEach(function(a){a.href=a.href.replace(/wa\.me\/\d+/,'wa.me/'+String(C.wa).replace(/[^\d]/g,''));});
+    if (path.indexOf('abroad')>-1) {
+      var ah=document.querySelector('.page-hero-h'), as=document.querySelector('.page-hero-sub');
+      if(ah&&C.abroad_h) ah.textContent=C.abroad_h;
+      if(as&&C.abroad_sub) as.textContent=C.abroad_sub;
+    }
+    if (path.indexOf('courses')>-1) {
+      var ch=document.querySelector('.page-hero-h'), cs=document.querySelector('.page-hero-sub');
+      if(ch&&C.courses_h) ch.textContent=C.courses_h;
+      if(cs&&C.courses_sub) cs.textContent=C.courses_sub;
+    }
+  }
+
+  function renderOffices(offices) {
+    var og = document.querySelector('.offices-grid');
+    if (!og) return;
+    og.innerHTML = offices.map(function(o) {
+      return '<div class="office-card'+(o.main||o.is_main?' office-main':'')+'">'+
+        '<div class="office-city">'+o.city+'</div>'+
+        '<div class="office-name">'+o.name+'</div>'+
+        '<div class="office-addr">📍 '+o.addr+'</div>'+
+        '<div class="office-hrs">'+o.hrs+'</div></div>';
+    }).join('');
+  }
+
+  function renderReviews(reviews) {
+    var rg = document.getElementById('reviews-grid');
+    if (!rg) return;
+    rg.innerHTML = reviews.map(function(r) {
+      return '<div class="review-card">'+
+        '<div class="rv-head"><div class="rv-av" style="background:'+(r.color||'#2563EB')+'">'+(r.avatar||r.name[0])+'</div>'+
+        '<div><div class="rv-name">'+r.name+'</div><div class="rv-date">'+(r.date||r.date_label||'')+'</div></div></div>'+
+        '<div class="rv-stars">★★★★★</div>'+
+        '<p class="rv-text">'+r.text+'</p>'+
+        (r.badge?'<div class="rv-badge">'+r.badge+'</div>':'')+
+        '</div>';
+    }).join('');
+  }
+
+  function renderPromo(promos) {
+    var pt = document.getElementById('pt');
+    if (!pt || !promos.length) return;
+    pt.innerHTML = promos.map(function(p) {
+      return '<a href="'+(p.href||'#')+'" class="pc-card" style="background:'+(p.bg||'#2563EB')+'">'+
+        '<div class="pc-tag">'+(p.tag||'')+'</div>'+
+        '<div class="pc-ey">'+(p.ey||'')+'</div>'+
+        '<div class="pc-title">'+p.title+'</div>'+
+        '<div class="pc-desc">'+(p.sub||'')+'</div>'+
+        '<div class="pc-cta">'+(p.cta||'Подробнее →')+'</div></a>';
+    }).join('');
+  }
+
+  function applyHero(src) {
+    var hi = document.querySelector('.hero-img,.hero-photo');
+    if (hi) { hi.tagName==='IMG' ? hi.src=src : hi.style.backgroundImage='url('+src+')'; }
+  }
+
+  /* Save test results to Supabase */
+  window.gscSaveTestResult = async function(result) {
+    if (useLocal) {
+      try {
+        var res=JSON.parse(localStorage.getItem('gsc_test_results')||'[]');
+        res.unshift(result);
+        localStorage.setItem('gsc_test_results',JSON.stringify(res));
+      } catch(e) {}
+      return;
+    }
+    try {
+      await fetch(SUPABASE_URL + '/rest/v1/test_results', {
+        method: 'POST',
+        headers: { 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json' },
+        body: JSON.stringify({ name:result.name||'', phone:result.phone||'', test_type:result.type, test_name:result.typeName, score:result.score, total:result.total, level:String(result.level) })
+      });
+    } catch(e) {}
+  };
+
+  /* Save lead to Supabase */
+  window.gscSaveLead = async function(lead) {
+    if (useLocal) {
+      try {
+        var leads=JSON.parse(localStorage.getItem('gsc_leads')||'[]');
+        leads.unshift(lead);
+        localStorage.setItem('gsc_leads',JSON.stringify(leads));
+      } catch(e) {}
+      return;
+    }
+    try {
+      await fetch(SUPABASE_URL + '/rest/v1/leads', {
+        method: 'POST',
+        headers: { 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json' },
+        body: JSON.stringify({ name:lead.name, phone:lead.phone, course:lead.course||'', source:lead.source||'Сайт' })
+      });
+    } catch(e) {}
+  };
+})();
+</script>
 </body>
 </html
 <!-- HERO -->
@@ -3091,104 +3151,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();
       if(hi){ if(hi.tagName==='IMG') hi.src=imgs.hero; else hi.style.backgroundImage='url('+imgs.hero+')';}
     }
 
-  });
-})();
-</script>
-<script>
-/* ══ GSC CMS LOADER v3 ══ */
-(function() {
-  document.addEventListener('DOMContentLoaded', function() {
-    var PFX = 'gsc_';
-    function get(key, def) {
-      try { var v = localStorage.getItem(PFX + key); return v !== null ? JSON.parse(v) : def; }
-      catch(e) { return def; }
-    }
-
-    /* Offices */
-    var offices = get('offices', null);
-    var og = document.querySelector('.offices-grid');
-    if (og && offices && offices.length) {
-      og.innerHTML = offices.map(function(o) {
-        return '<div class="office-card' + (o.main ? ' office-main' : '') + '">'
-          + '<div class="office-city">' + o.city + '</div>'
-          + '<div class="office-name">' + o.name + '</div>'
-          + '<div class="office-addr">📍 ' + o.addr + '</div>'
-          + '<div class="office-hrs">' + o.hrs + '</div>'
-          + '</div>';
-      }).join('');
-    }
-
-    /* Reviews */
-    var reviews = get('google_reviews', null);
-    var rg = document.getElementById('reviews-grid');
-    if (rg && reviews && reviews.length) {
-      rg.innerHTML = reviews.map(function(r) {
-        return '<div class="review-card">'
-          + '<div class="rv-head"><div class="rv-av" style="background:' + r.color + '">' + r.avatar + '</div>'
-          + '<div><div class="rv-name">' + r.name + '</div><div class="rv-date">' + r.date + '</div></div></div>'
-          + '<div class="rv-stars">★★★★★</div>'
-          + '<p class="rv-text">' + r.text + '</p>'
-          + (r.badge ? '<div class="rv-badge">' + r.badge + '</div>' : '')
-          + '</div>';
-      }).join('');
-    }
-
-    /* Promo slides */
-    var promos = get('promo_slides', null);
-    var pt = document.getElementById('pt');
-    if (pt && promos && promos.length) {
-      pt.innerHTML = promos.map(function(p, i) {
-        return '<a href="' + (p.href || '#') + '" class="pc-card" style="background:' + (p.bg || '#2563EB') + '">'
-          + '<div class="pc-tag">' + p.tag + '</div>'
-          + '<div class="pc-ey">' + p.ey + '</div>'
-          + '<div class="pc-title">' + p.title + '</div>'
-          + '<div class="pc-desc">' + p.sub + '</div>'
-          + '<div class="pc-cta">' + p.cta + '</div>'
-          + '</a>';
-      }).join('');
-    }
-
-    /* Contacts */
-    var C = get('content', {});
-    if (C.phone) {
-      document.querySelectorAll('a[href^="tel:"]').forEach(function(a) {
-        a.href = 'tel:' + C.phone.replace(/[^\d+]/g, '');
-        a.textContent = C.phone;
-      });
-    }
-    if (C.email) {
-      document.querySelectorAll('a[href^="mailto:"]').forEach(function(a) {
-        a.href = 'mailto:' + C.email;
-        a.textContent = C.email;
-      });
-    }
-    if (C.wa) {
-      document.querySelectorAll('a[href*="wa.me"]').forEach(function(a) {
-        a.href = a.href.replace(/wa\.me\/\d+/, 'wa.me/' + C.wa.replace(/[^\d]/g, ''));
-      });
-    }
-
-    /* Hero image */
-    var imgs = get('images', {});
-    if (imgs.hero) {
-      var hi = document.querySelector('.hero-img, .hero-photo');
-      if (hi) { hi.tagName === 'IMG' ? hi.src = imgs.hero : hi.style.backgroundImage = 'url(' + imgs.hero + ')'; }
-    }
-
-    /* Page-specific text overrides (abroad / courses) */
-    var path = location.pathname;
-    if (path.indexOf('abroad') > -1) {
-      var ah = document.querySelector('.page-hero-h');
-      var as = document.querySelector('.page-hero-sub');
-      if (ah && C.abroad_h) ah.textContent = C.abroad_h;
-      if (as && C.abroad_sub) as.textContent = C.abroad_sub;
-    }
-    if (path.indexOf('courses') > -1) {
-      var ch = document.querySelector('.page-hero-h');
-      var cs = document.querySelector('.page-hero-sub');
-      if (ch && C.courses_h) ch.textContent = C.courses_h;
-      if (cs && C.courses_sub) cs.textContent = C.courses_sub;
-    }
   });
 })();
 </script>

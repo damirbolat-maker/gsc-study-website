@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GSC Study — Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -226,6 +226,13 @@ input,textarea,select{font-family:var(--f)}
 </style>
 </head>
 <body>
+
+<div id="supabaseBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#FEF3C7;border-bottom:2px solid #F59E0B;padding:10px 20px;font-size:13px;font-weight:600;color:#92400E;align-items:center;gap:10px;">
+  ⚠️ Настройте Supabase — замените https://alqzuuuaxqzwrcytrpvm.supabase.co и sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_ в коде admin.html
+  <button onclick="this.parentElement.style.display='none'" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px">✕</button>
+</div>
+
+
 
 <!-- LOGIN -->
 <div id="lw">
@@ -498,7 +505,7 @@ input,textarea,select{font-family:var(--f)}
     <div class="sc"><div class="scl">English Level</div><div class="scn" id="re">0</div><div class="scc">пройдено</div></div>
     <div class="sc"><div class="scl">Kids</div><div class="scn" id="rk">0</div><div class="scc">пройдено</div></div>
   </div>
-  <div class="tw"><table class="tbl"><thead><tr><th>Имя</th><th>Тест</th><th>Балл</th><th>Уровень</th><th>Дата</th><th></th></tr></thead><tbody id="trtb"></tbody></table></div>
+  <div class="tw"><table class="tbl"><thead><tr><th>Имя</th><th>Телефон</th><th>Тест</th><th>Балл</th><th>Уровень</th><th>Дата</th><th></th></tr></thead><tbody id="trtb"></tbody></table></div>
 </div>
 
 <!-- SETTINGS -->
@@ -581,64 +588,163 @@ input,textarea,select{font-family:var(--f)}
 
 <div class="twrap" id="tw"></div>
 
+
+<div class="twrap" id="tw"></div>
 <script>
-/* ══ DATA ADAPTER — localStorage now, Supabase-ready ══
-   To connect Supabase: replace DB.set / DB.get body only. ══ */
-const DB = (function() {
-  const PFX = 'gsc_';
-  return {
-    set(key, val) { try { localStorage.setItem(PFX+key, JSON.stringify(val)); } catch(e) {} },
-    get(key, def) { try { const v=localStorage.getItem(PFX+key); return v!==null ? JSON.parse(v) : def; } catch(e) { return def; } },
-    remove(key) { try { localStorage.removeItem(PFX+key); } catch(e) {} }
-  };
-})();
-// Legacy aliases — keep existing code working
-const K = 'gsc_';
-const S = (k,v) => DB.set(k,v);
-const G = (k,d) => DB.get(k,d);
+/* ═══════════════════════════════════════════════════════════════
+   GSC SUPABASE ADAPTER v1.0
+   Replace SUPABASE_URL and SUPABASE_KEY with your project values
+   ═══════════════════════════════════════════════════════════════ */
 
-// ═══════════════════════════════════════════════════════
-// CORE
-// ═══════════════════════════════════════════════════════
-/* ═══════════════════════════════════════════
-   GSC Data Layer v2
-   localStorage now — swap to API here later
-   ═══════════════════════════════════════════
-   To migrate to Supabase/API:
-   1. Replace GSC.get with: await supabase.from('data').select().eq('key', key)
-   2. Replace GSC.set with: await supabase.from('data').upsert({key, value: JSON.stringify(val)})
-   3. Mark functions as async and add await where needed
-*/
-const GSC = {
-  _p: 'gsc_',
-  set(k, v) {
-    try { localStorage.setItem(this._p + k, JSON.stringify(v)); return true; }
-    catch(e) { console.warn('[GSC] set failed:', k, e); return false; }
+const SUPABASE_URL = 'https://alqzuuuaxqzwrcytrpvm.supabase.co';     // https://xxxx.supabase.co
+const SUPABASE_KEY = 'sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_'; // eyJh...
+
+/* ── Low-level fetch wrapper ── */
+async function sbFetch(path, method, body) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method: method || 'GET',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('Supabase error: ' + err);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+/* ── DB API — same interface as old localStorage adapter ── */
+const DB = {
+  /* LEADS */
+  async getLeads() {
+    return sbFetch('leads?order=created_at.desc&limit=500');
   },
-  get(k, d) {
-    try { const v = localStorage.getItem(this._p + k); return v !== null ? JSON.parse(v) : d; }
-    catch(e) { return d; }
+  async addLead(lead) {
+    return sbFetch('leads', 'POST', {
+      name: lead.name, phone: lead.phone, course: lead.course,
+      source: lead.source || 'Сайт', status: lead.status || 'new',
+      note: lead.note || '', manager: lead.manager || ''
+    });
   },
-  del(k) { localStorage.removeItem(this._p + k); }
+  async updateLeadStatus(id, status) {
+    return sbFetch('leads?id=eq.' + id, 'PATCH', { status });
+  },
+  async deleteLead(id) {
+    return sbFetch('leads?id=eq.' + id, 'DELETE');
+  },
+
+  /* TEST RESULTS */
+  async getTestResults() {
+    return sbFetch('test_results?order=created_at.desc&limit=500');
+  },
+  async addTestResult(r) {
+    return sbFetch('test_results', 'POST', {
+      name: r.name || '', phone: r.phone || '',
+      test_type: r.type, test_name: r.typeName,
+      score: r.score, total: r.total, level: String(r.level)
+    });
+  },
+
+  /* CONTENT (ключи сайта) */
+  async getContent() {
+    const rows = await sbFetch('content');
+    const obj = {};
+    (rows || []).forEach(r => { obj[r.key] = r.value; });
+    return obj;
+  },
+  async setContent(key, value) {
+    return sbFetch('content?key=eq.' + key, 'PATCH', { value, updated_at: new Date().toISOString() })
+      .catch(() => sbFetch('content', 'POST', { key, value }));
+  },
+
+  /* OFFICES */
+  async getOffices() {
+    return sbFetch('offices?order=sort_order');
+  },
+  async updateOffice(id, data) {
+    return sbFetch('offices?id=eq.' + id, 'PATCH', data);
+  },
+
+  /* REVIEWS */
+  async getReviews() {
+    return sbFetch('reviews?is_active=eq.true&order=sort_order');
+  },
+  async addReview(r) {
+    return sbFetch('reviews', 'POST', r);
+  },
+  async deleteReview(id) {
+    return sbFetch('reviews?id=eq.' + id, 'DELETE');
+  },
+
+  /* PROMO SLIDES */
+  async getPromo() {
+    return sbFetch('promo_slides?order=sort_order');
+  },
+  async addPromo(p) {
+    return sbFetch('promo_slides', 'POST', p);
+  },
+  async updatePromo(id, data) {
+    return sbFetch('promo_slides?id=eq.' + id, 'PATCH', data);
+  },
+  async deletePromo(id) {
+    return sbFetch('promo_slides?id=eq.' + id, 'DELETE');
+  },
+
+  /* TEST QUESTIONS */
+  async getQuestions(type) {
+    return sbFetch('test_questions?test_type=eq.' + type + '&order=sort_order');
+  },
+  async addQuestion(q) {
+    return sbFetch('test_questions', 'POST', q);
+  },
+  async updateQuestion(id, data) {
+    return sbFetch('test_questions?id=eq.' + id, 'PATCH', data);
+  },
+  async deleteQuestion(id) {
+    return sbFetch('test_questions?id=eq.' + id, 'DELETE');
+  }
 };
-/* Backwards-compat aliases */
 
-const fd = d => d.getDate().toString().padStart(2,'0')+'.'+(d.getMonth()+1).toString().padStart(2,'0')+'.'+d.getFullYear()+' '+d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
-const eid = id => document.getElementById(id);
-const $ = sel => document.querySelector(sel);
+/* ── Toast helper (used before admin loads) ── */
+function toast(msg, type) {
+  type = type || 'i';
+  const w = document.getElementById('tw');
+  if (!w) return;
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = (type==='s'?'✅ ':type==='e'?'❌ ':'ℹ️ ') + msg;
+  w.appendChild(t);
+  setTimeout(() => {
+    t.style.opacity = '0'; t.style.transform = 'translateX(32px)';
+    t.style.transition = '.28s'; setTimeout(() => t.remove(), 280);
+  }, 4000);
+}
 
-// ═══════════════════════════════════════════════════════
-// AUTH
-// ═══════════════════════════════════════════════════════
-const USERS = { admin:{pass:'gsc2026',role:'Администратор',name:'Администратор'}, manager:{pass:'manager123',role:'Менеджер',name:'Менеджер'} };
+
+/* ═══════════════════════════════════════════════════════════════
+   GSC ADMIN v3 — Supabase powered
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── AUTH (stays local) ── */
+const USERS = {
+  admin:   { pass:'gsc2026',    role:'Администратор', name:'Администратор' },
+  manager: { pass:'manager123', role:'Менеджер',       name:'Менеджер' }
+};
 let ME = null;
+const eid = id => document.getElementById(id);
+const fd = d => new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
 function login() {
   const u = eid('lu').value.trim(), p = eid('lp').value;
   const usr = USERS[u];
   if (usr && usr.pass === p) {
-    ME = {login:u, ...usr};
-    S('session', ME);
+    ME = { login: u, ...usr };
+    localStorage.setItem('gsc_session', JSON.stringify(ME));
     eid('le').style.display = 'none';
     initShell();
   } else {
@@ -646,412 +752,407 @@ function login() {
     eid('lp').value = '';
   }
 }
-
 function logout() {
-  localStorage.removeItem(K+'session');
+  localStorage.removeItem('gsc_session');
   ME = null;
   eid('sh').classList.remove('on');
   eid('lw').style.display = 'flex';
 }
+['lu','lp'].forEach(id => eid(id)?.addEventListener('keydown', e => { if(e.key==='Enter') login(); }));
+eid('sbout')?.addEventListener('click', logout);
 
-function initShell() {
-  eid('lw').style.display = 'none';
-  eid('sh').classList.add('on');
-  eid('sbav').textContent = ME.name[0];
-  eid('sbun').textContent = ME.name;
-  eid('sbur').textContent = ME.role;
-  loadContent();
-  loadImages();
-  renderOffices();
-  renderReviews();
-  renderPromo();
-  renderTests();
-  renderTestRes();
-  renderDash();
-}
-
-// Auth events
-eid('lbtn').onclick = login;
-['lu','lp'].forEach(id => eid(id).addEventListener('keydown', e => { if(e.key==='Enter') login(); }));
-eid('sbout').onclick = logout;
-eid('siteLink').onclick = () => window.open('index.html','_blank');
-
-// Auto-login
+/* Auto-login */
 (function() {
-  const s = G('session', null);
-  if (s && USERS[s.login]) { ME = s; initShell(); }
+  try {
+    const s = JSON.parse(localStorage.getItem('gsc_session'));
+    if (s && USERS[s.login]) { ME = s; initShell(); }
+  } catch(e) {}
 })();
 
-// ═══════════════════════════════════════════════════════
-// PANEL NAVIGATION
-// ═══════════════════════════════════════════════════════
-const TITLES = {dash:'Дашборд',leads:'Заявки',content:'Тексты сайта',images:'Изображения',offices:'Офисы',reviews:'Отзывы',promo:'Акции',tests:'Конструктор тестов',testres:'Результаты тестов',settings:'Настройки'};
+/* ── SHELL ── */
+async function initShell() {
+  eid('lw').style.display = 'none';
+  eid('sh').classList.add('on');
+  eid('sbav').textContent  = ME.name[0];
+  eid('sbun').textContent  = ME.name;
+  eid('sbur').textContent  = ME.role;
+
+  // Check Supabase connection
+  if (SUPABASE_URL === 'https://alqzuuuaxqzwrcytrpvm.supabase.co') {
+    showBanner('⚠️ Supabase не настроен. Введи URL и ключ в коде admin.html');
+  }
+
+  await renderDash();
+}
+
+/* ── PANEL NAV ── */
+const TITLES = {dash:'Дашборд',leads:'Заявки',content:'Тексты сайта',
+  images:'Изображения',offices:'Офисы',reviews:'Отзывы',promo:'Акции',
+  tests:'Конструктор тестов',testres:'Результаты тестов',settings:'Настройки'};
+
+document.querySelectorAll('.sbi[data-p]').forEach(el => {
+  el.addEventListener('click', () => gp(el.getAttribute('data-p')));
+});
 
 function gp(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-  const panel = eid('p-'+id);
+  const panel = eid('p-' + id);
   if (panel) panel.classList.add('on');
   document.querySelectorAll('.sbi[data-p]').forEach(i => i.classList.remove('on'));
-  const navItem = document.querySelector('.sbi[data-p="'+id+'"]');
-  if (navItem) navItem.classList.add('on');
+  const nav = document.querySelector('.sbi[data-p="'+id+'"]');
+  if (nav) nav.classList.add('on');
   eid('tbt').textContent = TITLES[id] || id;
+  // Lazy load panels
+  if (id === 'leads')   renderLeads();
+  if (id === 'offices') renderOffices();
+  if (id === 'reviews') renderReviews();
+  if (id === 'promo')   renderPromo();
+  if (id === 'testres') renderTestResults();
+  if (id === 'content') loadContent();
 }
 
-document.querySelectorAll('.sbi[data-p]').forEach(el => {
-  el.onclick = () => gp(el.getAttribute('data-p'));
-});
+eid('previewBtn')?.addEventListener('click', () => window.open('index.html','_blank'));
+eid('newLeadBtn')?.addEventListener('click', () => openM('ml'));
+eid('allLeadsBtn')?.addEventListener('click', () => gp('leads'));
 
-// Topbar actions
-eid('previewBtn').onclick = () => window.open('index.html','_blank');
-eid('newLeadBtn').onclick = () => openM('ml');
-eid('allLeadsBtn').onclick = () => gp('leads');
+/* ── MODALS ── */
+function openM(id) { eid(id)?.classList.add('open'); }
+function closeM(id) { eid(id)?.classList.remove('open'); }
+document.querySelectorAll('[data-m]').forEach(btn =>
+  btn.addEventListener('click', () => closeM(btn.getAttribute('data-m')))
+);
+document.querySelectorAll('.mov').forEach(m =>
+  m.addEventListener('click', e => { if(e.target===m) closeM(m.id); })
+);
 
-// ═══════════════════════════════════════════════════════
-// MODALS
-// ═══════════════════════════════════════════════════════
-function openM(id) { eid(id).classList.add('open'); }
-function closeM(id) { eid(id).classList.remove('open'); }
-
-document.querySelectorAll('[data-m]').forEach(btn => {
-  btn.onclick = () => closeM(btn.getAttribute('data-m'));
-});
-document.querySelectorAll('.mov').forEach(m => {
-  m.onclick = e => { if(e.target===m) closeM(m.id); };
-});
-
-// ═══════════════════════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════════════════════
-function toast(msg, type) {
-  type = type || 'i';
-  const w = eid('tw'), t = document.createElement('div');
-  t.className = 'toast '+type;
-  t.textContent = (type==='s'?'✅ ':type==='e'?'❌ ':'ℹ️ ') + msg;
-  w.appendChild(t);
-  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(32px)'; t.style.transition='.28s'; setTimeout(()=>t.remove(),280); }, 4000);
+/* ── BANNER ── */
+function showBanner(msg) {
+  const b = document.getElementById('supabaseBanner');
+  if (b) { b.textContent = msg; b.style.display = 'flex'; }
 }
 
-// ═══════════════════════════════════════════════════════
-// LEADS
-// ═══════════════════════════════════════════════════════
+/* ── DASHBOARD ── */
+async function renderDash() {
+  try {
+    const [leads, results] = await Promise.all([DB.getLeads(), DB.getTestResults()]);
+    const newC = leads.filter(l => l.status === 'new').length;
+    const enrolled = leads.filter(l => l.status === 'enrolled').length;
+    eid('s1').textContent  = leads.length;
+    eid('s1c').textContent = 'Новых: ' + newC;
+    eid('s2').textContent  = results.length;
+    eid('s4').textContent  = leads.length ? Math.round(enrolled/leads.length*100)+'%' : '—';
+    eid('lbadge').textContent = newC;
+    // Chart — last 7 days
+    const days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    const now = new Date();
+    const vals = days.map((_, i) => {
+      const d = new Date(now); d.setDate(d.getDate() - (6-i));
+      return leads.filter(l => new Date(l.created_at).toDateString() === d.toDateString()).length;
+    });
+    const mx = Math.max(...vals, 1);
+    eid('chart').innerHTML = vals.map((v,i) =>
+      `<div class="bit"><div class="bva">${v||''}</div><div class="bar" style="height:${Math.round(v/mx*75)+4}px"></div><div class="bla">${days[i]}</div></div>`
+    ).join('');
+    // Recent leads
+    const tb = eid('dtb');
+    if (tb) {
+      const SL = {new:'Новая',called:'Позвонили',enrolled:'Записался'};
+      const SC = {new:'wn',called:'no',enrolled:'ok'};
+      tb.innerHTML = leads.slice(0,6).map(l =>
+        `<tr><td><strong>${l.name}</strong></td><td>${l.phone}</td><td>${l.course}</td>
+         <td>${l.source}</td><td>${fd(l.created_at)}</td>
+         <td><span class="bdg ${SC[l.status]}">${SL[l.status]}</span></td>
+         <td class="tda"><button class="tb2 e" onclick="changeStatus(${l.id},'${l.status}')">→</button></td></tr>`
+      ).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:16px">Заявок нет</td></tr>';
+    }
+    renderLeadsTable(leads);
+  } catch(e) {
+    showBanner('❌ Ошибка подключения к Supabase: ' + e.message);
+  }
+}
+
+/* ── LEADS ── */
+let curFilter = 'all';
 const SL = {new:'Новая',called:'Позвонили',enrolled:'Записался'};
 const SC = {new:'wn',called:'no',enrolled:'ok'};
-const getL = () => G('leads', []);
-const setL = ls => S('leads', ls);
 
-let curF = 'all';
-
-eid('addLeadBtn2').onclick = () => openM('ml');
-eid('addRvBtn').onclick = () => openM('mr');
-
-eid('saveLeadBtn').onclick = function() {
-  const n=eid('ln').value.trim(), ph=eid('lph').value.trim();
-  if(!n||!ph) { toast('Заполните имя и телефон','e'); return; }
-  const ls=getL();
-  ls.unshift({id:Date.now(),name:n,phone:ph,course:eid('lco').value,source:eid('lso').value,note:eid('lnt').value,status:'new',date:fd(new Date()),manager:ME.name});
-  setL(ls);
-  closeM('ml');
-  toast('Заявка добавлена!','s');
-  ['ln','lph','lnt'].forEach(id => eid(id).value='');
-  renderDash();
-};
-
-function setStatus(id) {
-  const ls=getL(), l=ls.find(x=>x.id===id);
-  if(!l) return;
-  l.status = l.status==='new'?'called':l.status==='called'?'enrolled':'new';
-  setL(ls); toast('Статус: '+SL[l.status],'i'); renderDash();
+async function renderLeads() {
+  try {
+    const leads = await DB.getLeads();
+    renderLeadsTable(leads);
+  } catch(e) { toast('Ошибка загрузки заявок','e'); }
 }
-function delLead(id) {
-  if(!confirm('Удалить?')) return;
-  setL(getL().filter(x=>x.id!==id)); toast('Удалено','i'); renderDash();
+
+function renderLeadsTable(leads) {
+  const fl = curFilter === 'all' ? leads : leads.filter(l => l.status === curFilter);
+  const tb = eid('ltb');
+  if (!tb) return;
+  tb.innerHTML = fl.map((l,i) =>
+    `<tr><td>${i+1}</td><td><strong>${l.name}</strong></td>
+     <td><a href="tel:${l.phone}" style="color:var(--bl)">${l.phone}</a></td>
+     <td>${l.course}</td><td>${l.source}</td><td>${l.manager||'—'}</td>
+     <td>${fd(l.created_at)}</td>
+     <td><span class="bdg ${SC[l.status]}">${SL[l.status]}</span></td>
+     <td class="tda">
+       <button class="tb2 e" onclick="changeStatus(${l.id},'${l.status}')">→</button>
+       <button class="tb2 d" onclick="delLead(${l.id})">✕</button>
+     </td></tr>`
+  ).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--mu);padding:20px">Нет заявок</td></tr>';
 }
 
 function setF(s) {
-  curF=s;
+  curFilter = s;
   ['all','new','called','enrolled'].forEach(t => {
-    const b=eid('tf-'+t); if(!b) return;
-    b.style.background=t===s?'var(--wh)':'none';
-    b.style.fontWeight=t===s?'700':'500';
-    b.style.color=t===s?'var(--ink)':'var(--mu)';
+    const b = eid('tf-'+t); if(!b) return;
+    b.style.background  = t===s ? 'var(--wh)' : 'none';
+    b.style.fontWeight  = t===s ? '700' : '500';
+    b.style.color       = t===s ? 'var(--ink)' : 'var(--mu)';
   });
   renderLeads();
 }
 
-function renderLeads() {
-  const ls=getL(), fl=curF==='all'?ls:ls.filter(l=>l.status===curF);
-  const tb=eid('ltb'); if(!tb) return;
-  tb.innerHTML = fl.length ? fl.map((l,i) =>
-    '<tr><td>'+(i+1)+'</td><td><strong>'+l.name+'</strong></td><td>'+l.phone+'</td><td>'+l.course+'</td><td>'+l.source+'</td><td>'+(l.manager||'—')+'</td><td>'+l.date+'</td><td><span class="bdg '+SC[l.status]+'">'+SL[l.status]+'</span></td><td class="tda"><button class="tb2 e" onclick="setStatus('+l.id+')">→</button><button class="tb2 d" onclick="delLead('+l.id+')">✕</button></td></tr>'
-  ).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--mu);padding:20px">Нет заявок</td></tr>';
+async function changeStatus(id, cur) {
+  const next = {new:'called',called:'enrolled',enrolled:'new'};
+  try {
+    await DB.updateLeadStatus(id, next[cur]);
+    toast('Статус обновлён','s');
+    renderDash();
+  } catch(e) { toast('Ошибка','e'); }
 }
 
-eid('exportBtn').onclick = function() {
-  const ls=getL();
-  const rows=[['ID','Имя','Телефон','Курс','Источник','Менеджер','Статус','Дата']].concat(ls.map(l=>[l.id,'"'+l.name+'"',l.phone,'"'+l.course+'"',l.source||'',l.manager||'',l.status,l.date]));
-  const csv=rows.map(r=>r.join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download='gsc_leads.csv'; a.click();
-  toast('CSV скачан ('+ls.length+' заявок)','s');
-};
-
-// ═══════════════════════════════════════════════════════
-// CONTENT
-// ═══════════════════════════════════════════════════════
-function loadContent() {
-  const C=G('content',{});
-  if(C.phrases) eid('c-phrases').value=C.phrases.join('\n');
-  if(C.split_h) eid('c-split_h').value=C.split_h;
-  if(C.split_sub) eid('c-split_sub').value=C.split_sub;
-  if(C.abroad_h) eid('c-abroad_h').value=C.abroad_h;
-  if(C.abroad_sub) eid('c-abroad_sub').value=C.abroad_sub;
-  if(C.courses_h) eid('c-courses_h').value=C.courses_h;
-  if(C.courses_sub) eid('c-courses_sub').value=C.courses_sub;
-  if(C.phone) eid('c-phone').value=C.phone;
-  if(C.wa) eid('c-wa').value=C.wa;
-  if(C.email) eid('c-email').value=C.email;
-  if(C.ig) eid('c-ig').value=C.ig;
+async function delLead(id) {
+  if (!confirm('Удалить заявку?')) return;
+  try {
+    await DB.deleteLead(id);
+    toast('Удалено','i');
+    renderDash();
+  } catch(e) { toast('Ошибка','e'); }
 }
 
-function saveC(section) {
-  const C=G('content',{});
-  const v=id=>eid(id).value;
-  if(section==='phrases') C.phrases=v('c-phrases').split('\n').map(x=>x.trim()).filter(Boolean);
-  else if(section==='split') { C.split_h=v('c-split_h'); C.split_sub=v('c-split_sub'); }
-  else if(section==='abroad') { C.abroad_h=v('c-abroad_h'); C.abroad_sub=v('c-abroad_sub'); }
-  else if(section==='courses') { C.courses_h=v('c-courses_h'); C.courses_sub=v('c-courses_sub'); }
-  else if(section==='contacts') { C.phone=v('c-phone'); C.wa=v('c-wa'); C.email=v('c-email'); C.ig=v('c-ig'); }
-  S('content',C);
-  toast('Сохранено! Обновите страницу сайта чтобы увидеть изменения.','s');
+eid('saveLeadBtn')?.addEventListener('click', async () => {
+  const n = eid('ln').value.trim(), ph = eid('lph').value.trim();
+  if (!n || !ph) { toast('Введите имя и телефон','e'); return; }
+  try {
+    await DB.addLead({ name:n, phone:ph, course:eid('lco').value, source:eid('lso').value, note:eid('lnt').value, manager:ME.name });
+    closeM('ml');
+    toast('Заявка добавлена!','s');
+    ['ln','lph','lnt'].forEach(id => eid(id).value='');
+    renderDash();
+  } catch(e) { toast('Ошибка: '+e.message,'e'); }
+});
+
+async function exportCSV() {
+  const leads = await DB.getLeads();
+  const rows = [['ID','Имя','Телефон','Курс','Источник','Менеджер','Статус','Дата']];
+  leads.forEach(l => rows.push([l.id,`"${l.name}"`,l.phone,`"${l.course}"`,l.source||'',l.manager||'',l.status,fd(l.created_at)]));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'gsc_leads_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  toast('CSV скачан','s');
 }
 
-eid('copySeoBtn').onclick = function() {
-  const t=eid('c-stitle').value, d=eid('c-sdesc').value;
-  const code='<title>'+t+'</title>\n<meta name="description" content="'+d+'"/>';
-  navigator.clipboard.writeText(code).then(()=>toast('Скопировано','s')).catch(()=>toast('Ошибно — скопируйте вручную','e'));
-};
-
-// ═══════════════════════════════════════════════════════
-// IMAGES
-// ═══════════════════════════════════════════════════════
-function uploadImg(file, key) {
-  if(!file) return;
-  if(file.size>2097152) { toast('Файл >2MB','e'); return; }
-  const r=new FileReader();
-  r.onload=e => { const imgs=G('images',{}); imgs[key]=e.target.result; S('images',imgs); const el=eid('img-'+key); if(el){el.src=e.target.result;el.style.display='block';} toast('Сохранено','s'); };
-  r.readAsDataURL(file);
+/* ── CONTENT ── */
+async function loadContent() {
+  try {
+    const C = await DB.getContent();
+    const set = (id, val) => { const e = eid(id); if(e && val !== undefined) e.value = Array.isArray(val) ? val.join('\n') : String(val); };
+    set('c-phrases',   C.phrases);
+    set('c-split_h',   C.split_h);
+    set('c-split_sub', C.split_sub);
+    set('c-abroad_h',  C.abroad_h);
+    set('c-abroad_sub',C.abroad_sub);
+    set('c-courses_h', C.courses_h);
+    set('c-courses_sub',C.courses_sub);
+    set('c-phone',     C.phone);
+    set('c-wa',        C.wa);
+    set('c-email',     C.email);
+    set('c-ig',        C.ig);
+  } catch(e) { toast('Ошибка загрузки контента','e'); }
 }
 
-function uploadImgs(files, key) {
-  const wrap=eid('imgs-'+key); if(!wrap) return;
-  const imgs=G('images',{}); if(!Array.isArray(imgs[key])) imgs[key]=[];
-  Array.from(files).forEach(file=>{
-    if(file.size>2097152){toast(file.name+' >2MB','e');return;}
-    const r=new FileReader();
-    r.onload=e=>{imgs[key].push(e.target.result);S('images',imgs);const img=document.createElement('img');img.src=e.target.result;img.style.cssText='height:56px;width:56px;object-fit:cover;border-radius:8px;border:1.5px solid var(--br)';wrap.appendChild(img);};
-    r.readAsDataURL(file);
-  });
-  toast(files.length+' фото загружено','s');
+async function saveC(section) {
+  const v = id => eid(id)?.value || '';
+  const updates = {
+    phrases:  { phrases:  v('c-phrases').split('\n').map(x=>x.trim()).filter(Boolean) },
+    split:    { split_h:  v('c-split_h'), split_sub: v('c-split_sub') },
+    abroad:   { abroad_h: v('c-abroad_h'), abroad_sub: v('c-abroad_sub') },
+    courses:  { courses_h:v('c-courses_h'), courses_sub:v('c-courses_sub') },
+    contacts: { phone:v('c-phone'), wa:v('c-wa'), email:v('c-email'), ig:v('c-ig') },
+  };
+  const data = updates[section];
+  if (!data) return;
+  try {
+    await Promise.all(Object.entries(data).map(([k,val]) => DB.setContent(k, val)));
+    toast('Сохранено! Сайт обновится автоматически.','s');
+  } catch(e) { toast('Ошибка сохранения','e'); }
 }
 
-function loadImages() {
-  const imgs=G('images',{});
-  if(imgs.hero){const el=eid('img-hero');if(el){el.src=imgs.hero;el.style.display='block';}}
-}
-
-eid('upHero').onchange = e => uploadImg(e.target.files[0],'hero');
-eid('clearHero').onclick = () => { const imgs=G('images',{}); delete imgs.hero; S('images',imgs); const el=eid('img-hero'); if(el){el.src='';el.style.display='none';} toast('Удалено','i'); };
-eid('upUnis').onchange = e => uploadImgs(e.target.files,'unis');
-eid('upTeam').onchange = e => uploadImgs(e.target.files,'team');
-eid('upOffices').onchange = e => uploadImgs(e.target.files,'offpic');
-
-// ═══════════════════════════════════════════════════════
-// OFFICES
-// ═══════════════════════════════════════════════════════
-const DEF_OFF=[
-  {city:'Астана — Есиль',name:'Главный офис',addr:'ул. Сарайшык 34',hrs:'Пн–Пт 9:00–21:00 · Сб 10:00–14:00',main:true},
-  {city:'Астана — Нура',name:'Филиал Сыганак',addr:'ул. Сыганак 15',hrs:'Пн–Пт 9:00–21:00 · Сб 10:00–14:00',main:false},
-  {city:'Астана — Есиль',name:'Филиал Улы Дала',addr:'пр. Улы Дала 41/6',hrs:'Пн–Пт 9:00–21:00 · Сб 10:00–14:00',main:false},
-  {city:'Алматы',name:'Алматы — Сейфуллина',addr:'пр. Сейфуллина 574/1',hrs:'Пн–Пт 9:00–21:00 · Сб 10:00–14:00',main:false},
-];
-
-function renderOffices() {
-  const offs=G('offices',DEF_OFF), og=eid('og'); if(!og) return;
-  og.innerHTML=offs.map((o,i)=>
-    '<div class="oc'+(o.main?' ocm':'')+'"><div class="oname"><div class="odot" style="background:'+(o.main?'var(--bl)':'var(--gr)')+'"></div><input value="'+o.name+'" data-i="'+i+'" data-f="name" style="font-family:var(--fd);font-size:13px;font-weight:700;border:none;background:none;outline:none;color:var(--ink);flex:1">'+(o.main?'<span class="bdg ok">Главный</span>':'')+'</div>'+
-    '<div class="fr"><label class="fl">Город</label><input class="fi" data-i="'+i+'" data-f="city" value="'+o.city+'"></div>'+
-    '<div class="fr"><label class="fl">Адрес</label><input class="fi" data-i="'+i+'" data-f="addr" value="'+o.addr+'"></div>'+
-    '<div class="fr"><label class="fl">График</label><input class="fi" data-i="'+i+'" data-f="hrs" value="'+o.hrs+'"></div></div>'
+/* ── OFFICES ── */
+async function renderOffices() {
+  const offices = await DB.getOffices();
+  const og = eid('og'); if(!og) return;
+  og.innerHTML = offices.map(o =>
+    `<div class="oc${o.is_main?' ocm':''}">
+      <div class="oname"><div class="odot" style="background:${o.is_main?'var(--bl)':'var(--gr)'}"></div>
+      <input value="${o.name}" data-oid="${o.id}" data-f="name" style="font-family:var(--fd);font-size:13px;font-weight:700;border:none;background:none;outline:none;color:var(--ink);flex:1"/>
+      ${o.is_main?'<span class="bdg ok">Главный</span>':''}</div>
+      <div class="fr"><label class="fl">Город</label><input class="fi" data-oid="${o.id}" data-f="city" value="${o.city}"/></div>
+      <div class="fr"><label class="fl">Адрес</label><input class="fi" data-oid="${o.id}" data-f="addr" value="${o.addr}"/></div>
+      <div class="fr"><label class="fl">График</label><input class="fi" data-oid="${o.id}" data-f="hrs" value="${o.hrs}"/></div>
+    </div>`
   ).join('');
 }
 
-eid('saveOffBtn').onclick = function() {
-  const offs=G('offices',DEF_OFF);
-  document.querySelectorAll('[data-i][data-f]').forEach(inp=>{const i=+inp.getAttribute('data-i'),f=inp.getAttribute('data-f');if(offs[i]&&f)offs[i][f]=inp.value;});
-  S('offices',offs); toast('Офисы сохранены! Обновите сайт.','s');
-};
-
-// ═══════════════════════════════════════════════════════
-// REVIEWS
-// ═══════════════════════════════════════════════════════
-const DEF_RV=[
-  {id:1,name:'Зарина Н.',avatar:'З',color:'#2563EB',date:'2 нед. назад',text:'Пришла с IELTS 6.0, нужен 7.5 для Edinburgh. За 3 месяца получила 8.0!',badge:'IELTS 6.0→8.0'},
-  {id:2,name:'Данияр А.',avatar:'Д',color:'#0065BD',date:'1 мес.',text:'Поступил в TU Munich. Помогли с SAT. Учусь почти бесплатно.',badge:'TU Munich'},
-  {id:3,name:'Айгерим С.',avatar:'А',color:'#00A060',date:'3 нед.',text:'Дочь сдала Cambridge YLE Movers через 8 месяцев.',badge:'Kids · YLE'},
-  {id:4,name:'Нурлан М.',avatar:'Н',color:'#6D28D9',date:'2 мес.',text:'SAT поднял с 1050 до 1420 за 3 месяца.',badge:'SAT 1050→1420'},
-  {id:5,name:'Малика Т.',avatar:'М',color:'#C05000',date:'1 мес.',text:'Business English B1→C1 за 4 месяца.',badge:'Business Eng'},
-  {id:6,name:'Асель Б.',avatar:'А',color:'#FF5F40',date:'3 мес.',text:'Поступила в University of Toronto с первого раза.',badge:'Univ. Toronto'},
-];
-const getRV = () => G('google_reviews', DEF_RV);
-
-function renderReviews() {
-  const g=eid('rvg'); if(!g) return;
-  g.innerHTML=getRV().map(r=>'<div class="rvc"><div class="rvh"><div class="rvav" style="background:'+r.color+'">'+r.avatar+'</div><div><div class="rvnm">'+r.name+'</div><div class="rvdt">'+r.date+'</div></div><button class="tb2 d" style="margin-left:auto" onclick="delRv('+r.id+')">✕</button></div><div class="rvst">★★★★★</div><div class="rvtx">'+r.text+'</div>'+( r.badge?'<div class="rvbd">'+r.badge+'</div>':'')+'</div>').join('');
+async function saveOffices() {
+  const inputs = document.querySelectorAll('[data-oid][data-f]');
+  const updates = {};
+  inputs.forEach(inp => {
+    const id = inp.getAttribute('data-oid');
+    const f  = inp.getAttribute('data-f');
+    if (!updates[id]) updates[id] = {};
+    updates[id][f] = inp.value;
+  });
+  try {
+    await Promise.all(Object.entries(updates).map(([id, data]) => DB.updateOffice(id, data)));
+    toast('Офисы сохранены!','s');
+  } catch(e) { toast('Ошибка','e'); }
 }
 
-eid('saveRvBtn').onclick = function() {
-  const n=eid('rn').value.trim(), tx=eid('rt').value.trim();
-  if(!n||!tx){toast('Заполните имя и текст','e');return;}
-  const rvs=getRV();
-  rvs.unshift({id:Date.now(),name:n,avatar:n[0],color:eid('rc').value,date:eid('rd').value||'Сегодня',text:tx,badge:eid('rb').value});
-  S('google_reviews',rvs); renderReviews(); closeM('mr');
-  toast('Отзыв добавлен! Обновите сайт.','s');
-};
-
-function delRv(id) { S('google_reviews',getRV().filter(r=>r.id!==id)); renderReviews(); toast('Удалён','i'); }
-
-// ═══════════════════════════════════════════════════════
-// PROMO
-// ═══════════════════════════════════════════════════════
-const DEF_PR=[
-  {id:1,tag:'🎓 Поступление',title:'Учёба в Великобритании',sub:'Oxford, Cambridge, UCL — от А до Я'},
-  {id:2,tag:'📝 IELTS',title:'IELTS Intensive — апрель',sub:'Гарантируем повышение балла'},
-  {id:3,tag:'🇩🇪 Германия',title:'Учёба за €150/год',sub:'Бесплатное образование в Германии'},
-];
-const getPR = () => G('promo_slides', DEF_PR);
-
-function renderPromo() {
-  const pg=eid('pg'); if(!pg) return;
-  pg.innerHTML=getPR().map((s,i)=>'<div class="pcard"><div><label class="fl">Тег</label><input class="fi" data-pi="'+i+'" data-pf="tag" value="'+s.tag+'"></div><div><label class="fl">Заголовок</label><input class="fi" data-pi="'+i+'" data-pf="title" value="'+s.title+'"></div><div><label class="fl">Подзаголовок</label><input class="fi" data-pi="'+i+'" data-pf="sub" value="'+s.sub+'"></div><button class="tb2 d" onclick="delPR('+s.id+')" style="align-self:flex-end">✕</button></div>').join('');
+/* ── REVIEWS ── */
+async function renderReviews() {
+  const rvs = await DB.getReviews();
+  const g = eid('rvg'); if(!g) return;
+  g.innerHTML = rvs.map(r =>
+    `<div class="rvc">
+      <div class="rvh">
+        <div class="rvav" style="background:${r.color}">${r.avatar||r.name[0]}</div>
+        <div><div class="rvnm">${r.name}</div><div class="rvdt">${r.date_label}</div></div>
+        <button class="tb2 d" style="margin-left:auto" onclick="delReview(${r.id})">✕</button>
+      </div>
+      <div class="rvst">★★★★★</div>
+      <div class="rvtx">${r.text}</div>
+      ${r.badge?`<div class="rvbd">${r.badge}</div>`:''}
+    </div>`
+  ).join('');
 }
 
-eid('addPromoBtn').onclick = function() {
-  const p=getPR(); p.push({id:Date.now(),tag:'🆕 Новое',title:'Название акции',sub:'Описание'}); S('promo_slides',p); renderPromo();
-};
-function delPR(id){S('promo_slides',getPR().filter(p=>p.id!==id));renderPromo();}
-eid('savePromoBtn').onclick = function() {
-  const p=getPR();
-  document.querySelectorAll('[data-pi][data-pf]').forEach(inp=>{const i=+inp.getAttribute('data-pi'),f=inp.getAttribute('data-pf');if(p[i]&&f)p[i][f]=inp.value;});
-  S('promo_slides',p); toast('Акции сохранены! Обновите сайт.','s');
-};
-
-// ═══════════════════════════════════════════════════════
-// TEST BUILDER
-// ═══════════════════════════════════════════════════════
-const TM={ielts:{name:'IELTS',secs:['Vocabulary','Grammar','Reading','Listening']},sat:{name:'SAT',secs:['Reading & Writing','Math']},english:{name:'General English',secs:['A1','A2','B1','B2','C1','C2']},kids:{name:'Kids English',secs:['Starter','Movers','Flyers','KET']}};
-let cType='ielts', cQ=null;
-const getTQ=t=>G('test_q_'+t,[]);
-const setTQ=(t,qs)=>S('test_q_'+t,qs);
-
-document.querySelectorAll('.ttab').forEach(tab=>{
-  tab.onclick=()=>{ document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('on')); tab.classList.add('on'); cType=tab.getAttribute('data-t'); cQ=null; renderTests(); };
-});
-
-function renderTests() {
-  Object.keys(TM).forEach(t=>{const el=eid('tc-'+t);if(el)el.textContent=getTQ(t).length;});
-  const qs=getTQ(cType), list=eid('qlist'); if(!list) return;
-  list.innerHTML=qs.length?qs.map((q,i)=>'<div class="qitem'+(cQ===i?' qsel':'')+'" onclick="selQ('+i+')"><div class="qdel" onclick="event.stopPropagation();delQ('+i+')">✕</div><div class="qnum">'+(q.section||TM[cType].secs[0])+' · Q'+(i+1)+'</div><div class="qtxt">'+(q.text||'(пусто)')+'</div></div>').join(''):'<div style="font-size:11px;color:var(--mu);text-align:center;padding:20px">Нет вопросов</div>';
-  renderQEd();
+async function saveReview() {
+  const n = eid('rn').value.trim(), tx = eid('rt').value.trim();
+  if (!n||!tx) { toast('Заполните имя и текст','e'); return; }
+  try {
+    await DB.addReview({ name:n, avatar:n[0], color:eid('rc').value, date_label:eid('rd').value||'Сегодня', text:tx, badge:eid('rb').value });
+    await renderReviews();
+    closeM('mr');
+    toast('Отзыв добавлен!','s');
+  } catch(e) { toast('Ошибка','e'); }
 }
 
-function selQ(i){cQ=i;renderTests();}
-
-function renderQEd() {
-  const ed=eid('qed'); if(!ed) return;
-  const qs=getTQ(cType);
-  if(cQ===null||!qs[cQ]){ed.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--mu);text-align:center"><div style="font-size:36px;opacity:.3;margin-bottom:10px">📝</div><div style="font-size:13px;font-weight:600;margin-bottom:4px">Выберите вопрос</div><div style="font-size:11px">или добавьте новый</div></div>';return;}
-  const q=qs[cQ], secs=TM[cType].secs;
-  const sopts=secs.map(s=>'<option'+(q.section===s?' selected':'')+'>'+s+'</option>').join('');
-  const lets=['A','B','C','D'];
-  ed.innerHTML='<div style="font-family:var(--fd);font-size:14px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid var(--br)">Вопрос '+(cQ+1)+'</div>'+
-    '<div class="fr"><label class="fl">Раздел</label><select class="fi" id="qsec" oninput="updQ()">'+sopts+'</select></div>'+
-    '<div class="fr"><label class="fl">Текст вопроса</label><textarea class="fi" id="qtext" oninput="updQ()" style="min-height:60px">'+(q.text||'')+'</textarea></div>'+
-    '<div class="fr"><label class="fl">Подсказка (опционально)</label><input class="fi" id="qhint" oninput="updQ()" value="'+(q.hint||'')+'"></div>'+
-    '<div class="fr"><label class="fl">Варианты (отметьте правильный)</label><div style="display:flex;flex-direction:column;gap:7px">'+(q.options||['','','','']).map((opt,oi)=>'<div style="display:flex;align-items:center;gap:7px"><div style="width:26px;height:26px;border-radius:50%;background:'+(q.answer===oi?'var(--gr)':'var(--wh2)')+';border:1.5px solid '+(q.answer===oi?'var(--gr)':'var(--br2)')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:'+(q.answer===oi?'#fff':'var(--mu)')+'">'+lets[oi]+'</div><input style="flex:1;padding:7px 10px;border:1.5px solid '+(q.answer===oi?'var(--gr)':'var(--br2)')+';background:'+(q.answer===oi?'#F0FDF4':'var(--wh)')+';border-radius:8px;font-size:12px;outline:none" id="opt-'+oi+'" value="'+opt+'" oninput="updOpt('+oi+')"><input type="radio" name="ans" '+(q.answer===oi?'checked':'')+' onchange="setAns('+oi+')" style="accent-color:var(--gr);width:15px;height:15px"><span style="font-size:9px;color:var(--mu);white-space:nowrap">верный</span></div>').join('')+'</div></div>'+
-    '<div style="display:flex;gap:8px;margin-top:6px;padding-top:12px;border-top:1px solid var(--br)"><button class="tb2 e" onclick="dupQ('+cQ+')">⧉ Дублировать</button><button class="tb2 d" onclick="delQ('+cQ+')">✕ Удалить</button></div>';
+async function delReview(id) {
+  await DB.deleteReview(id);
+  renderReviews();
+  toast('Удалён','i');
 }
 
-function updQ(){const qs=getTQ(cType);if(cQ===null||!qs[cQ])return;qs[cQ].section=eid('qsec').value;qs[cQ].text=eid('qtext').value;qs[cQ].hint=eid('qhint').value;setTQ(cType,qs);const it=document.querySelectorAll('.qitem')[cQ];if(it)it.querySelector('.qtxt').textContent=qs[cQ].text||'(пусто)';}
-function updOpt(oi){const qs=getTQ(cType);if(cQ===null||!qs[cQ])return;if(!qs[cQ].options)qs[cQ].options=['','','',''];qs[cQ].options[oi]=eid('opt-'+oi).value;setTQ(cType,qs);}
-function setAns(oi){const qs=getTQ(cType);if(cQ===null||!qs[cQ])return;qs[cQ].answer=oi;setTQ(cType,qs);renderQEd();}
-
-function addQ(){const qs=getTQ(cType);qs.push({section:TM[cType].secs[0],text:'',hint:'',type:'mcq',options:['','','',''],answer:0});setTQ(cType,qs);cQ=qs.length-1;renderTests();toast('Вопрос добавлен','s');}
-function delQ(i){const qs=getTQ(cType);qs.splice(i,1);setTQ(cType,qs);if(cQ>=qs.length)cQ=qs.length>0?qs.length-1:null;renderTests();}
-function dupQ(i){const qs=getTQ(cType);qs.splice(i+1,0,JSON.parse(JSON.stringify(qs[i])));setTQ(cType,qs);cQ=i+1;renderTests();toast('Дублировано','s');}
-
-eid('addQBtn').onclick = addQ;
-eid('addQBtn2').onclick = addQ;
-eid('saveTestBtn').onclick = () => toast('Тест «'+TM[cType].name+'» — '+getTQ(cType).length+' вопросов сохранено','s');
-
-eid('expTestBtn').onclick = function(){
-  const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(getTQ(cType),null,2));a.download='gsc_test_'+cType+'.json';a.click();toast('JSON скачан','s');
-};
-eid('impTestBtn').onclick = () => eid('impFile').click();
-eid('impFile').onchange = function(){
-  const f=this.files[0];if(!f)return;
-  const r=new FileReader();r.onload=e=>{try{const qs=JSON.parse(e.target.result);if(!Array.isArray(qs))throw new Error('Нужен массив');setTQ(cType,qs);cQ=null;renderTests();toast('Импортировано: '+qs.length+' вопросов','s');}catch(err){toast('Ошибка JSON: '+err.message,'e');}};r.readAsText(f);
-};
-
-// ═══════════════════════════════════════════════════════
-// TEST RESULTS
-// ═══════════════════════════════════════════════════════
-function renderTestRes() {
-  const res=G('test_results',[]);
-  const cn={ielts:0,sat:0,english:0,kids:0};
-  res.forEach(r=>{if(cn[r.type]!==undefined)cn[r.type]++;});
-  [['ri','ielts'],['rs','sat'],['re','english'],['rk','kids']].forEach(([id,t])=>{const el=eid(id);if(el)el.textContent=cn[t];});
-  const tb=eid('trtb');if(!tb)return;
-  tb.innerHTML=res.length?res.map(r=>'<tr><td>'+(r.name||'—')+'</td><td>'+r.typeName+'</td><td><strong>'+r.score+'</strong>/'+r.total+' ('+Math.round(r.score/r.total*100)+'%)</td><td><strong>'+r.level+'</strong></td><td>'+r.date+'</td><td class="tda"><button class="tb2 e">📞</button></td></tr>').join(''):'<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:20px">Результаты появятся после прохождения тестов</td></tr>';
+/* ── PROMO ── */
+async function renderPromo() {
+  const promos = await DB.getPromo();
+  const pg = eid('pg'); if(!pg) return;
+  pg.innerHTML = promos.map(s =>
+    `<div class="pcard">
+      <div><label class="fl">Тег</label><input class="fi" data-pid="${s.id}" data-pf="tag" value="${s.tag}"/></div>
+      <div><label class="fl">Заголовок</label><input class="fi" data-pid="${s.id}" data-pf="title" value="${s.title}"/></div>
+      <div><label class="fl">Подзаголовок</label><input class="fi" data-pid="${s.id}" data-pf="sub" value="${s.sub}"/></div>
+      <button class="tb2 d" style="align-self:flex-end" onclick="delPromo(${s.id})">✕</button>
+    </div>`
+  ).join('');
 }
 
-// ═══════════════════════════════════════════════════════
-// SETTINGS
-// ═══════════════════════════════════════════════════════
-eid('saveSettBtn').onclick = function(){S('cfg',{active:eid('cfg-active').checked,wa:eid('cfg-wa').checked,tests:eid('cfg-tests').checked,lang:eid('cfg-lang').checked});toast('Настройки сохранены','s');};
-eid('saveIntBtn').onclick = function(){S('integrations',{ga:eid('cfg-ga').value,fbpx:eid('cfg-fbpx').value,twoGis:eid('cfg-2gis').value});toast('Интеграции сохранены','s');};
-eid('expCSVBtn').onclick = function(){eid('exportBtn').click();};
-eid('expAllBtn').onclick = function(){
-  const keys=['leads','content','offices','google_reviews','promo_slides','test_q_ielts','test_q_sat','test_q_english','test_q_kids','images','cfg','integrations'];
-  const data={_exported:new Date().toISOString()};keys.forEach(k=>{const v=G(k,null);if(v!==null)data[k]=v;});
-  const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));a.download='gsc_backup.json';a.click();toast('Бэкап скачан','s');
-};
-eid('impAllBtn').onclick = () => eid('restFile').click();
-eid('restFile').onchange = function(){
-  const f=this.files[0];if(!f)return;
-  const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);Object.keys(d).filter(k=>!k.startsWith('_')).forEach(k=>S(k,d[k]));toast('Данные восстановлены! Перезагрузка...','s');setTimeout(()=>location.reload(),2000);}catch(err){toast('Ошибка: '+err.message,'e');}};r.readAsText(f);
-};
-eid('clearAllBtn').onclick = function(){
-  if(!confirm('Удалить ВСЕ данные GSC? Необратимо!'))return;
-  ['leads','content','offices','google_reviews','promo_slides','test_q_ielts','test_q_sat','test_q_english','test_q_kids','images','cfg','integrations','session'].forEach(k=>localStorage.removeItem(K+k));
-  toast('Данные удалены. Перезагрузка...','e');setTimeout(()=>location.reload(),2000);
-};
-
-// ═══════════════════════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════════════════════
-function renderDash() {
-  const ls=getL(), newC=ls.filter(l=>l.status==='new').length, enrolled=ls.filter(l=>l.status==='enrolled').length;
-  eid('s1').textContent=ls.length; eid('s1c').textContent='Новых: '+newC;
-  eid('lbadge').textContent=newC;
-  eid('s2').textContent=G('test_results',[]).length;
-  eid('s4').textContent=ls.length?Math.round(enrolled/ls.length*100)+'%':'—';
-  eid('s4c').textContent=enrolled+' из '+ls.length+' записались';
-  const days=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],vals=[3,7,5,9,4,6,ls.length%8],mx=Math.max(...vals,1);
-  eid('chart').innerHTML=vals.map((v,i)=>'<div class="bit"><div class="bva">'+v+'</div><div class="bar" style="height:'+( Math.round(v/mx*75)+4)+'px"></div><div class="bla">'+days[i]+'</div></div>').join('');
-  eid('dtb').innerHTML=ls.slice(0,6).length?ls.slice(0,6).map(l=>'<tr><td><strong>'+l.name+'</strong></td><td>'+l.phone+'</td><td>'+l.course+'</td><td>'+l.source+'</td><td>'+l.date+'</td><td><span class="bdg '+SC[l.status]+'">'+SL[l.status]+'</span></td><td class="tda"><button class="tb2 e" onclick="setStatus('+l.id+')">→</button></td></tr>').join(''):'<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:16px">Нет заявок. <button class="tb2 e" onclick="openM(\'ml\')">Добавить →</button></td></tr>';
-  renderLeads();
+async function addPromo() {
+  await DB.addPromo({tag:'🆕 Новое',title:'Название акции',sub:'Описание',sort_order:99});
+  renderPromo();
 }
+
+async function savePromo() {
+  const inputs = document.querySelectorAll('[data-pid][data-pf]');
+  const updates = {};
+  inputs.forEach(inp => {
+    const id = inp.getAttribute('data-pid');
+    const f  = inp.getAttribute('data-pf');
+    if (!updates[id]) updates[id] = {};
+    updates[id][f] = inp.value;
+  });
+  try {
+    await Promise.all(Object.entries(updates).map(([id,data]) => DB.updatePromo(id,data)));
+    toast('Акции сохранены!','s');
+  } catch(e) { toast('Ошибка','e'); }
+}
+
+async function delPromo(id) {
+  await DB.deletePromo(id);
+  renderPromo();
+  toast('Удалено','i');
+}
+
+/* ── TEST RESULTS ── */
+async function renderTestResults() {
+  const res = await DB.getTestResults();
+  const cn = {ielts:0,sat:0,english:0,kids:0};
+  res.forEach(r => { if(cn[r.test_type]!==undefined) cn[r.test_type]++; });
+  [['ri','ielts'],['rs','sat'],['re','english'],['rk','kids']].forEach(([id,t]) => {
+    const el = eid(id); if(el) el.textContent = cn[t];
+  });
+  const tb = eid('trtb'); if(!tb) return;
+  tb.innerHTML = res.map(r =>
+    `<tr>
+      <td>${r.name||'—'}</td>
+      <td>${r.phone||'—'}</td>
+      <td>${r.test_name}</td>
+      <td><strong>${r.score}</strong>/${r.total} (${Math.round(r.score/r.total*100)}%)</td>
+      <td><strong>${r.level}</strong></td>
+      <td>${fd(r.created_at)}</td>
+      <td class="tda">
+        ${r.phone?`<a class="tb2 e" href="https://wa.me/${r.phone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Привет '+r.name+'! Ваш результат: '+r.test_name+' '+r.level)}" target="_blank">💬 WA</a>`:''}
+      </td>
+    </tr>`
+  ).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:20px">Результаты появятся после прохождения тестов</td></tr>';
+}
+
+/* ── IMAGES (localStorage only — файлы хранятся локально) ── */
+function uploadImg(input, key) {
+  const file = input.files[0]; if(!file) return;
+  if (file.size > 2097152) { toast('Файл >2MB','e'); return; }
+  const r = new FileReader();
+  r.onload = e => {
+    const imgs = JSON.parse(localStorage.getItem('gsc_images')||'{}');
+    imgs[key] = e.target.result;
+    localStorage.setItem('gsc_images', JSON.stringify(imgs));
+    const el = eid('img-'+key);
+    if (el) { el.src = e.target.result; el.style.display = 'block'; }
+    toast('Изображение сохранено','s');
+  };
+  r.readAsDataURL(file);
+}
+
+function loadImages() {
+  const imgs = JSON.parse(localStorage.getItem('gsc_images')||'{}');
+  if (imgs.hero) { const e=eid('img-hero'); if(e){e.src=imgs.hero;e.style.display='block';} }
+}
+
+/* ── SETTINGS ── */
+function saveSettings() {
+  localStorage.setItem('gsc_cfg', JSON.stringify({
+    active:  eid('cfg-active')?.checked,
+    wa:      eid('cfg-wa')?.checked,
+    tests:   eid('cfg-tests')?.checked,
+  }));
+  toast('Настройки сохранены','s');
+}
+
+/* ── INIT ── */
+loadImages();
+
 </script>
 </body>
 </html>

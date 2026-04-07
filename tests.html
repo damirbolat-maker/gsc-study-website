@@ -580,12 +580,29 @@ function finishTest(){
     '<div class="rs"><div class="rs-n">'+pct+'%</div><div class="rs-l">Точность</div></div>';
   if(rCTA)rCTA.href='https://wa.me/77718080828?text='+encodeURIComponent(waMsg);
 
-  try{
-    var res=JSON.parse(localStorage.getItem('gsc_test_results')||'[]');
-    res.unshift({type:ST.type,typeName:test.name,name:_cName||'',phone:_cPhone||'',score:score,total:total,level:String(level),date:new Date().toLocaleDateString('ru-RU')});
-    if(res.length>500)res=res.slice(0,500);
-    localStorage.setItem('gsc_test_results',JSON.stringify(res));
-  }catch(e){}
+  // Save to Supabase
+  (async function(){
+    try {
+      await fetch('https://alqzuuuaxqzwrcytrpvm.supabase.co/rest/v1/test_results', {
+        method:'POST',
+        headers:{'apikey':'sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_','Authorization':'Bearer sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_','Content-Type':'application/json'},
+        body:JSON.stringify({name:_cName||'',phone:_cPhone||'',test_type:ST.type,test_name:test.name,score:score,total:total,level:String(level)})
+      });
+    }catch(e){
+      // Fallback to localStorage
+      try{var res=JSON.parse(localStorage.getItem('gsc_test_results')||'[]');res.unshift({type:ST.type,typeName:test.name,name:_cName||'',phone:_cPhone||'',score:score,total:total,level:String(level),date:new Date().toLocaleDateString('ru-RU')});localStorage.setItem('gsc_test_results',JSON.stringify(res));}catch(e2){}
+    }
+    // Also save lead if phone provided
+    if(_cPhone) {
+      try {
+        await fetch('https://alqzuuuaxqzwrcytrpvm.supabase.co/rest/v1/leads', {
+          method:'POST',
+          headers:{'apikey':'sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_','Authorization':'Bearer sb_publishable_pgkYFfhsgfE2oHjzL0P0FQ_BKCFwfM_','Content-Type':'application/json'},
+          body:JSON.stringify({name:_cName||'',phone:_cPhone,course:'Тест: '+test.name+' → '+String(level),source:'Тест уровня',status:'new'})
+        });
+      }catch(e){}
+    }
+  })();
 
   show('scrR');
 }
