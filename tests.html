@@ -583,7 +583,7 @@ function finishTest(){
   // Save to Supabase
   (async function(){
     try {
-      await fetch('https://alqzuuuaxqzwrcytrpvm.supabase.co/rest/v1/test_results', {
+      await fetch('https://alzouuuaxqzwrcytrpvm.supabase.co/rest/v1/test_results', {
         method:'POST',
         headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y','Content-Type':'application/json'},
         body:JSON.stringify({name:_cName||'',phone:_cPhone||'',test_type:ST.type,test_name:test.name,score:score,total:total,level:String(level)})
@@ -595,7 +595,7 @@ function finishTest(){
     // Also save lead if phone provided
     if(_cPhone) {
       try {
-        await fetch('https://alqzuuuaxqzwrcytrpvm.supabase.co/rest/v1/leads', {
+        await fetch('https://alzouuuaxqzwrcytrpvm.supabase.co/rest/v1/leads', {
           method:'POST',
           headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y','Content-Type':'application/json'},
           body:JSON.stringify({name:_cName||'',phone:_cPhone,course:'Тест: '+test.name+' → '+String(level),source:'Тест уровня',status:'new'})
