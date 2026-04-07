@@ -601,21 +601,31 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 /* ── Low-level fetch wrapper ── */
 async function sbFetch(path, method, body) {
-  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    method: method || 'GET',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
-    },
-    body: body ? JSON.stringify(body) : undefined
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error('Supabase error: ' + err);
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+      method: method || 'GET',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      if (res.status === 404 || txt.includes('relation') || txt.includes('does not exist')) {
+        throw new Error('Таблицы не созданы. Запусти SQL схему в Supabase → SQL Editor → Run');
+      }
+      throw new Error(res.status + ': ' + txt.substring(0, 100));
+    }
+    return res.status === 204 ? null : res.json();
+  } catch(e) {
+    if (e.name === 'TypeError' && e.message === 'Failed to fetch') {
+      throw new Error('CORS / сеть. Проверь: 1) Supabase URL верный? 2) SQL схема запущена?');
+    }
+    throw e;
   }
-  return res.status === 204 ? null : res.json();
 }
 
 /* ── DB API — same interface as old localStorage adapter ── */
@@ -771,6 +781,18 @@ eid('sbout')?.addEventListener('click', logout);
 
 /* ── SHELL ── */
 async function initShell() {
+  // Quick connection test
+  try {
+    const ping = await fetch(SUPABASE_URL + '/rest/v1/leads?limit=1', {
+      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
+    });
+    if (ping.status === 401) showBanner('❌ Неверный API ключ Supabase');
+    else if (ping.status === 404) showBanner('⚠️ Таблицы не найдены — запусти gsc_schema.sql в Supabase SQL Editor');
+    else if (!ping.ok) showBanner('⚠️ Supabase ответил: ' + ping.status);
+    // else: connected OK
+  } catch(e) {
+    showBanner('❌ Нет связи с Supabase. Проверь интернет-соединение и URL проекта.');
+  }
   eid('lw').style.display = 'none';
   eid('sh').classList.add('on');
   eid('sbav').textContent  = ME.name[0];
@@ -867,7 +889,7 @@ async function renderDash() {
     }
     renderLeadsTable(leads);
   } catch(e) {
-    showBanner('❌ Ошибка подключения к Supabase: ' + e.message);
+    showBanner('❌ ' + e.message + ' | Проверь: SQL схема запущена в Supabase? URL и ключ верные?');
   }
 }
 
