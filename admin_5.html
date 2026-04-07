@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GSC Study — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bl:#2563EB;--bl2:#1D4ED8;--bl3:#EFF4FF;--bl4:#DBEAFE;
+  --ink:#0E0E14;--ink2:#1C1C28;--mu:#6B7280;--mu2:#9CA3AF;
+  --wh:#FAFAF8;--wh2:#F2F0EB;--wh3:#E8E5DE;
+  --br:rgba(14,14,20,.1);--br2:rgba(14,14,20,.16);
+  --gr:#22C55E;--rd:#EF4444;--am:#F59E0B;
+  --fd:'Syne',sans-serif;--f:'DM Sans',sans-serif;
+  --r:10px;--rl:14px;--rx:20px;
+  --sp:cubic-bezier(.34,1.56,.64,1);
+  --sw:240px;
+}
+body{font-family:var(--f);background:var(--wh2);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:var(--f)}
+input,textarea,select{font-family:var(--f)}
+
+/* LOGIN */
+#lw{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--ink2);position:relative;overflow:hidden}
+.gl{position:absolute;border-radius:50%;pointer-events:none}
+.gl1{width:500px;height:500px;background:radial-gradient(circle,rgba(37,99,235,.22),transparent 70%);top:-100px;left:-100px}
+.gl2{width:380px;height:380px;background:radial-gradient(circle,rgba(200,255,0,.1),transparent 70%);bottom:-80px;right:-80px}
+.lc{background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:24px;padding:40px 36px;width:380px;position:relative;z-index:1;backdrop-filter:blur(20px)}
+.lo{display:flex;align-items:center;gap:9px;margin-bottom:28px;justify-content:center}
+.lbg{width:38px;height:38px;background:var(--bl);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:17px;font-weight:800;color:#fff}
+.lbr{font-family:var(--fd);font-size:18px;font-weight:800;color:#fff}
+.lh{font-family:var(--fd);font-size:22px;font-weight:800;color:#fff;margin-bottom:4px}
+.ls{font-size:12px;color:rgba(255,255,255,.38);margin-bottom:24px}
+.ll{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;display:block}
+.li{width:100%;padding:11px 13px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:11px;font-size:14px;color:#fff;outline:none;margin-bottom:13px;transition:border-color .2s}
+.li:focus{border-color:var(--bl)}
+.li::placeholder{color:rgba(255,255,255,.22)}
+.lb{width:100%;padding:12px;background:var(--bl);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;transition:transform .2s var(--sp),box-shadow .2s}
+.lb:hover{transform:scale(1.02);box-shadow:0 8px 24px rgba(37,99,235,.4)}
+.le{display:none;padding:9px 12px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#FCA5A5;margin-bottom:10px;text-align:center}
+.lh2{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)}
+.lh2t{font-size:10px;color:rgba(255,255,255,.28);text-align:center;margin-bottom:7px;text-transform:uppercase;letter-spacing:.07em}
+.lhi{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:rgba(255,255,255,.3)}
+.lhi b{color:rgba(255,255,255,.5);font-weight:600}
+
+/* SHELL */
+#sh{display:none;min-height:100vh;grid-template-columns:var(--sw) 1fr;grid-template-rows:56px 1fr}
+#sh.on{display:grid}
+
+/* SIDEBAR */
+.sb{grid-row:1/3;background:var(--ink2);display:flex;flex-direction:column;overflow-y:auto;position:sticky;top:0;height:100vh}
+.sbt{padding:18px 15px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.sbi2{width:29px;height:29px;background:var(--bl);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.sbn{font-family:var(--fd);font-size:13px;font-weight:800;color:#fff}
+.sbs{font-size:9px;color:rgba(255,255,255,.32)}
+.sbnav{padding:8px 7px;flex:1}
+.sbsec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.26);padding:9px 9px 4px}
+.sbi{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;font-size:12px;font-weight:500;color:rgba(255,255,255,.48);cursor:pointer;transition:.14s;margin-bottom:1px;user-select:none}
+.sbi:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.82)}
+.sbi.on{background:rgba(37,99,235,.28);color:#fff;border:1px solid rgba(37,99,235,.32)}
+.sbi .ic{width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.sbi.on .ic{background:var(--bl)}
+.sbnc{margin-left:auto;background:var(--rd);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px;min-width:16px;text-align:center}
+.sbft{padding:12px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;display:flex;align-items:center;gap:8px}
+.sbav{width:28px;height:28px;border-radius:50%;background:var(--bl);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#fff;flex-shrink:0}
+.sbun{font-size:11px;font-weight:600;color:#fff}
+.sbur{font-size:9px;color:rgba(255,255,255,.36)}
+.sbout{width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.06);border:none;color:rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:12px;transition:.14s}
+.sbout:hover{background:rgba(239,68,68,.18);color:var(--rd)}
+
+/* TOPBAR */
+.tb{background:var(--wh);border-bottom:1.5px solid var(--br);padding:0 22px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50}
+.tbt{font-family:var(--fd);font-size:16px;font-weight:800;color:var(--ink)}
+.tbr{margin-left:auto;display:flex;align-items:center;gap:7px}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:100px;font-size:12px;font-weight:600;border:none;transition:.16s;cursor:pointer}
+.btn.p{background:var(--bl);color:#fff}.btn.p:hover{background:var(--bl2)}
+.btn.g{background:var(--wh2);color:var(--ink);border:1.5px solid var(--br2)}.btn.g:hover{border-color:var(--bl);color:var(--bl)}
+.btn.r{background:#FEF2F2;color:var(--rd);border:1.5px solid #FECACA}.btn.r:hover{background:#FEE2E2}
+
+/* MAIN */
+.main{padding:22px;overflow-y:auto}
+.panel{display:none}.panel.on{display:block}
+
+/* STAT CARDS */
+.sr{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:var(--wh);border:1.5px solid var(--br);border-radius:var(--rx);padding:16px;transition:transform .2s var(--sp)}
+.sc:hover{transform:translateY(-2px)}
+.scl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:7px}
+.scn{font-family:'Manrope',monospace;font-size:32px;font-weight:800;line-height:1;letter-spacing:-.03em;color:var(--ink);margin-bottom:2px}
+.scc{font-size:10px;font-weight:500;color:var(--gr)}
+
+/* CHART */
+.cw{background:var(--wh);border:1.5px solid var(--br);border-radius:var(--rx);padding:16px;margin-bottom:18px}
+.ctop{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ctit{font-family:var(--fd);font-size:13px;font-weight:700}
+.bars{display:flex;align-items:flex-end;gap:6px;height:80px}
+.bit{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.bar{width:100%;border-radius:3px 3px 0 0;background:var(--bl3);border:1.5px solid var(--bl4);transition:.16s}
+.bit:hover .bar{background:var(--bl);border-color:var(--bl)}
+.bla{font-size:8px;color:var(--mu);font-weight:600}
+.bva{font-size:8px;font-weight:700;color:var(--bl)}
+
+/* SECTION HEAD */
+.shd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.shd h2{font-family:var(--fd);font-size:16px;font-weight:800}
+.shdr{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+/* TABLE */
+.tw{background:var(--wh);border:1.5px solid var(--br);border-radius:var(--rx);overflow:hidden;margin-bottom:18px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:var(--wh2);padding:9px 12px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);border-bottom:1.5px solid var(--br)}
+.tbl td{padding:10px 12px;font-size:12px;border-bottom:1px solid var(--br)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--wh2)}
+.tda{display:flex;gap:4px}
+.tb2{padding:4px 8px;border-radius:6px;font-size:10px;font-weight:600;border:none;transition:.14s;cursor:pointer}
+.tb2.e{background:var(--bl3);color:var(--bl)}.tb2.e:hover{background:var(--bl4)}
+.tb2.d{background:#FEF2F2;color:var(--rd)}.tb2.d:hover{background:#FEE2E2}
+.bdg{display:inline-flex;align-items:center;padding:2px 7px;border-radius:100px;font-size:9px;font-weight:700}
+.bdg.ok{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
+.bdg.no{background:var(--wh2);color:var(--mu);border:1px solid var(--br2)}
+.bdg.wn{background:#FFF7ED;color:#92400E;border:1px solid #FED7AA}
+
+/* GRID */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.ec{background:var(--wh);border:1.5px solid var(--br);border-radius:var(--rx);overflow:hidden}
+.ech{padding:12px 16px;border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between}
+.ect{font-family:var(--fd);font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+.ecb{padding:16px}
+.fl{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;display:block}
+.fi{width:100%;padding:8px 11px;border:1.5px solid var(--br2);border-radius:var(--r);font-size:12px;color:var(--ink);background:var(--wh);transition:border-color .18s;outline:none;resize:vertical}
+.fi:focus{border-color:var(--bl);background:#fff}
+.fr{margin-bottom:10px}
+.srow2{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--br)}
+.shi{font-size:10px;color:var(--mu)}
+
+/* UPLOAD */
+.uz{border:2px dashed var(--br2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+.uz:hover{border-color:var(--bl);background:var(--bl3)}
+.uz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.uzi{font-size:26px;margin-bottom:5px}
+.uzt{font-size:12px;font-weight:500;color:var(--mu);margin-bottom:2px}
+.uzs{font-size:10px;color:var(--mu2)}
+
+/* OFFICES */
+.og{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.oc{background:var(--wh);border:1.5px solid var(--br);border-radius:var(--rx);padding:16px}
+.ocm{border-color:var(--bl);background:var(--bl3)}
+.oname{font-family:var(--fd);font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.odot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* REVIEWS */
+.rvg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rvc{background:var(--wh);border:1.5px solid var(--br);border-radius:12px;padding:13px}
+.rvh{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.rvav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#fff;flex-shrink:0}
+.rvnm{font-size:11px;font-weight:700}
+.rvdt{font-size:10px;color:var(--mu)}
+.rvst{color:#F4A827;font-size:11px;margin-bottom:4px}
+.rvtx{font-size:11px;color:var(--mu);line-height:1.5;margin-bottom:7px}
+.rvbd{display:inline-block;padding:2px 6px;border-radius:100px;background:var(--bl3);border:1px solid var(--bl4);font-size:9px;font-weight:700;color:var(--bl)}
+
+/* PROMO */
+.pg{display:flex;flex-direction:column;gap:10px}
+.pcard{background:var(--wh);border:1.5px solid var(--br);border-radius:var(--rx);padding:13px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+
+/* TESTS */
+.ttab{padding:9px 16px;font-size:12px;font-weight:600;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.14s;display:inline-flex;align-items:center;gap:6px}
+.ttab.on{color:var(--bl);border-bottom-color:var(--bl)}
+.qitem{background:var(--wh);border:1.5px solid var(--br);border-radius:10px;padding:9px 11px;cursor:pointer;transition:border-color .14s;position:relative;margin-bottom:5px}
+.qitem:hover{border-color:var(--bl3)}
+.qsel{border-color:var(--bl)!important;box-shadow:0 0 0 3px var(--bl3)}
+.qnum{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;margin-bottom:2px}
+.qtxt{font-size:11px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qdel{position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;background:#FEF2F2;border:none;color:var(--rd);font-size:10px;display:none;align-items:center;justify-content:center;font-weight:700;cursor:pointer}
+.qitem:hover .qdel{display:flex}
+
+/* SETTINGS */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.sc2{background:var(--wh);border:1.5px solid var(--br);border-radius:var(--rx);padding:20px}
+.togr{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--br)}
+.togr:last-child{border-bottom:none}
+.tolb{font-size:12px;font-weight:500}
+.toss{font-size:10px;color:var(--mu);margin-top:1px}
+.tog{position:relative;width:38px;height:20px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.togs{position:absolute;cursor:pointer;inset:0;background:var(--br2);border-radius:100px;transition:.28s}
+.togs:before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.28s var(--sp)}
+.tog input:checked+.togs{background:var(--bl)}
+.tog input:checked+.togs:before{transform:translateX(18px)}
+
+/* MODAL */
+.mov{display:none;position:fixed;inset:0;background:rgba(14,14,20,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.mov.open{display:flex}
+.mbox{background:var(--wh);border-radius:20px;padding:26px;max-width:480px;width:calc(100% - 24px);max-height:88vh;overflow-y:auto;animation:mIn .3s var(--sp) both}
+@keyframes mIn{from{opacity:0;transform:scale(.93) translateY(14px)}to{opacity:1;transform:none}}
+.mhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mtt{font-family:var(--fd);font-size:17px;font-weight:800}
+.mcl{width:28px;height:28px;border-radius:50%;background:var(--wh2);border:none;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--mu);transition:.14s;cursor:pointer}
+.mcl:hover{background:var(--wh3);color:var(--ink)}
+.mft{display:flex;gap:7px;justify-content:flex-end;margin-top:18px}
+
+/* LIVE BADGE */
+.live{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:var(--gr);background:#F0FDF4;border:1px solid #BBF7D0;border-radius:100px;padding:2px 7px;margin-left:6px}
+.live:before{content:'●';font-size:5px;animation:pu 1.5s ease infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* TOAST */
+.twrap{position:fixed;bottom:18px;right:18px;z-index:300;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{padding:10px 14px;border-radius:12px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;animation:tIn .28s var(--sp) both;box-shadow:0 6px 18px rgba(0,0,0,.13)}
+.toast.s{background:var(--gr);color:#fff}
+.toast.i{background:var(--bl);color:#fff}
+.toast.e{background:var(--rd);color:#fff}
+@keyframes tIn{from{opacity:0;transform:translateX(32px)}to{opacity:1;transform:none}}
+
+@media(max-width:900px){
+  :root{--sw:0px}
+  .sb{display:none}
+  .sr,.cg,.og,.sg,.rvg{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="lw">
+  <div class="gl gl1"></div><div class="gl gl2"></div>
+  <div class="lc">
+    <div class="lo"><div class="lbg">G</div><span class="lbr">GSC Study</span></div>
+    <div class="lh">Панель управления</div>
+    <div class="ls">CMS · Войдите для доступа</div>
+    <div class="le" id="le">Неверный логин или пароль</div>
+    <label class="ll">Логин</label>
+    <input class="li" id="lu" type="text" placeholder="admin" autocomplete="username">
+    <label class="ll">Пароль</label>
+    <input class="li" id="lp" type="password" placeholder="••••••••">
+    <button class="lb" id="lbtn">Войти →</button>
+    <div class="lh2">
+      <div class="lh2t">Тестовые аккаунты</div>
+      <div class="lhi"><span>Администратор</span><b>admin / gsc2026</b></div>
+      <div class="lhi"><span>Менеджер</span><b>manager / manager123</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHELL -->
+<div id="sh">
+  <aside class="sb">
+    <div class="sbt">
+      <div class="sbi2">G</div>
+      <div><div class="sbn">GSC Study</div><div class="sbs">Admin CMS</div></div>
+    </div>
+    <nav class="sbnav">
+      <div class="sbsec">Обзор</div>
+      <div class="sbi on" data-p="dash"><div class="ic">📊</div>Дашборд</div>
+      <div class="sbi" data-p="leads"><div class="ic">👤</div>Заявки<span class="sbnc" id="lbadge">0</span></div>
+      <div class="sbsec">Контент</div>
+      <div class="sbi" data-p="content"><div class="ic">✏️</div>Тексты <span class="live">Live</span></div>
+      <div class="sbi" data-p="images"><div class="ic">🖼</div>Изображения</div>
+      <div class="sbi" data-p="offices"><div class="ic">🏢</div>Офисы</div>
+      <div class="sbi" data-p="reviews"><div class="ic">⭐</div>Отзывы</div>
+      <div class="sbi" data-p="promo"><div class="ic">🎁</div>Акции</div>
+      <div class="sbsec">Тесты</div>
+      <div class="sbi" data-p="tests"><div class="ic">📝</div>Конструктор тестов</div>
+      <div class="sbi" data-p="testres"><div class="ic">📈</div>Результаты</div>
+      <div class="sbsec">Система</div>
+      <div class="sbi" data-p="settings"><div class="ic">⚙️</div>Настройки</div>
+      <div class="sbi" id="siteLink"><div class="ic">🌐</div>Открыть сайт ↗</div>
+    </nav>
+    <div class="sbft">
+      <div class="sbav" id="sbav">A</div>
+      <div><div class="sbun" id="sbun">Admin</div><div class="sbur" id="sbur">Роль</div></div>
+      <button class="sbout" id="sbout" title="Выйти">↩</button>
+    </div>
+  </aside>
+
+  <div style="display:flex;flex-direction:column;min-height:100vh">
+    <header class="tb">
+      <div class="tbt" id="tbt">Дашборд</div>
+      <div class="tbr">
+        <button class="btn g" id="previewBtn">👁 Предпросмотр</button>
+        <button class="btn p" id="newLeadBtn">+ Заявка</button>
+      </div>
+    </header>
+    <div class="main">
+
+<!-- DASHBOARD -->
+<div class="panel on" id="p-dash">
+  <div class="sr">
+    <div class="sc"><div class="scl">Заявок</div><div class="scn" id="s1">0</div><div class="scc" id="s1c">Новых: 0</div></div>
+    <div class="sc"><div class="scl">Тестов пройдено</div><div class="scn" id="s2">0</div><div class="scc">За всё время</div></div>
+    <div class="sc"><div class="scl">Студентов</div><div class="scn">15K+</div><div class="scc">За 15 лет</div></div>
+    <div class="sc"><div class="scl">Конверсия</div><div class="scn" id="s4">—</div><div class="scc" id="s4c">в запись</div></div>
+  </div>
+  <div class="cw">
+    <div class="ctop"><div class="ctit">Заявки за 7 дней</div></div>
+    <div class="bars" id="chart"></div>
+  </div>
+  <div class="shd"><h2>Последние заявки</h2><div class="shdr"><button class="btn g" id="allLeadsBtn">Все →</button></div></div>
+  <div class="tw"><table class="tbl"><thead><tr><th>Имя</th><th>Телефон</th><th>Курс</th><th>Источник</th><th>Дата</th><th>Статус</th><th></th></tr></thead><tbody id="dtb"></tbody></table></div>
+</div>
+
+<!-- LEADS -->
+<div class="panel" id="p-leads">
+  <div class="shd"><h2>Заявки</h2>
+    <div class="shdr">
+      <div style="display:flex;gap:3px;padding:3px;background:var(--wh2);border-radius:100px">
+        <button id="tf-all" onclick="setF('all')" style="padding:5px 11px;border-radius:100px;font-size:11px;font-weight:700;background:var(--wh);border:none;cursor:pointer;color:var(--ink)">Все</button>
+        <button id="tf-new" onclick="setF('new')" style="padding:5px 11px;border-radius:100px;font-size:11px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--mu)">Новые</button>
+        <button id="tf-called" onclick="setF('called')" style="padding:5px 11px;border-radius:100px;font-size:11px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--mu)">Позвонили</button>
+        <button id="tf-enrolled" onclick="setF('enrolled')" style="padding:5px 11px;border-radius:100px;font-size:11px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--mu)">Записались</button>
+      </div>
+      <button class="btn p" id="addLeadBtn2">+ Добавить</button>
+      <button class="btn g" id="exportBtn">⬇ CSV</button>
+    </div>
+  </div>
+  <div class="tw"><table class="tbl"><thead><tr><th>#</th><th>Имя</th><th>Телефон</th><th>Курс</th><th>Источник</th><th>Менеджер</th><th>Дата</th><th>Статус</th><th></th></tr></thead><tbody id="ltb"></tbody></table></div>
+</div>
+
+<!-- CONTENT -->
+<div class="panel" id="p-content">
+  <div class="shd"><h2>Тексты <span class="live">Изменения видны на сайте сразу</span></h2></div>
+  <div class="cg">
+    <div class="ec">
+      <div class="ech"><div class="ect">🏠 Hero — Typing фразы</div><span class="bdg ok">index.html</span></div>
+      <div class="ecb">
+        <div class="fr"><label class="fl">Фразы (каждая с новой строки)</label>
+          <textarea class="fi" id="c-phrases" style="min-height:110px">Я хочу поступить в топ вуз 🎓
+Я хочу выучить английский 📚
+Я хочу учиться за рубежом 🌍
+Я хочу развиваться 🚀
+Мне нужен результат!</textarea>
+        </div>
+        <div class="srow2"><span class="shi">Typing-анимация на главной</span><button class="btn p" onclick="saveC('phrases')">💾 Сохранить</button></div>
+      </div>
+    </div>
+    <div class="ec">
+      <div class="ech"><div class="ect">📋 Секция «С чем поможем»</div><span class="bdg ok">index.html</span></div>
+      <div class="ecb">
+        <div class="fr"><label class="fl">Заголовок</label><input class="fi" id="c-split_h" value="Комплексные решения для образования"></div>
+        <div class="fr"><label class="fl">Подзаголовок</label><textarea class="fi" id="c-split_sub">От первого урока английского до письма-приглашения из вуза мечты</textarea></div>
+        <div class="srow2"><span class="shi">Секция с описанием услуг</span><button class="btn p" onclick="saveC('split')">💾 Сохранить</button></div>
+      </div>
+    </div>
+    <div class="ec">
+      <div class="ech"><div class="ect">🌍 Страница «За рубеж»</div><span class="bdg ok">abroad.html</span></div>
+      <div class="ecb">
+        <div class="fr"><label class="fl">Заголовок Hero</label><input class="fi" id="c-abroad_h" value="Поступи в топ-вуз мира"></div>
+        <div class="fr"><label class="fl">Подзаголовок</label><textarea class="fi" id="c-abroad_sub">Сопровождаем от выбора программы до получения оффера.</textarea></div>
+        <div class="srow2"><span class="shi">Применится на abroad.html</span><button class="btn p" onclick="saveC('abroad')">💾 Сохранить</button></div>
+      </div>
+    </div>
+    <div class="ec">
+      <div class="ech"><div class="ect">📚 Страница «Курсы»</div><span class="bdg ok">courses.html</span></div>
+      <div class="ecb">
+        <div class="fr"><label class="fl">Заголовок Hero</label><input class="fi" id="c-courses_h" value="Учи язык с гарантией результата"></div>
+        <div class="fr"><label class="fl">Подзаголовок</label><textarea class="fi" id="c-courses_sub">IELTS, SAT, General English, Kids, Business, Китайский.</textarea></div>
+        <div class="srow2"><span class="shi">Применится на courses.html</span><button class="btn p" onclick="saveC('courses')">💾 Сохранить</button></div>
+      </div>
+    </div>
+    <div class="ec">
+      <div class="ech"><div class="ect">📞 Контакты</div><span class="bdg ok">Все страницы</span></div>
+      <div class="ecb">
+        <div class="fr"><label class="fl">Телефон</label><input class="fi" id="c-phone" value="+7 700 127 77 88"></div>
+        <div class="fr"><label class="fl">WhatsApp (цифры)</label><input class="fi" id="c-wa" value="77718080828"></div>
+        <div class="fr"><label class="fl">Email</label><input class="fi" id="c-email" value="info@gscenter.kz"></div>
+        <div class="fr"><label class="fl">Instagram</label><input class="fi" id="c-ig" value="@gscstudy.qaz"></div>
+        <div class="srow2"><span class="shi">Обновит контакты везде</span><button class="btn p" onclick="saveC('contacts')">💾 Сохранить</button></div>
+      </div>
+    </div>
+    <div class="ec">
+      <div class="ech"><div class="ect">🔍 SEO</div><span class="bdg no">Meta</span></div>
+      <div class="ecb">
+        <div class="fr"><label class="fl">Title</label><input class="fi" id="c-stitle" value="GSC Study — IELTS, SAT, Поступление | Казахстан"></div>
+        <div class="fr"><label class="fl">Description</label><textarea class="fi" id="c-sdesc">GSC Study — 15 лет. IELTS, SAT, поступление в UK, Германию, Канаду.</textarea></div>
+        <div class="srow2"><span class="shi">Скопируйте в head страниц</span><button class="btn g" id="copySeoBtn">📋 Копировать</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMAGES -->
+<div class="panel" id="p-images">
+  <div class="shd"><h2>Изображения</h2></div>
+  <div class="cg">
+    <div class="ec">
+      <div class="ech"><div class="ect">🏠 Hero фото (главная)</div></div>
+      <div class="ecb">
+        <div class="uz"><input type="file" accept="image/*" id="upHero">
+          <div class="uzi">🖼</div><div class="uzt">Нажми или перетащи</div><div class="uzs">JPG/PNG · макс. 2MB · рек. 1920×1080</div>
+        </div>
+        <img id="img-hero" style="display:none;max-height:120px;width:100%;object-fit:cover;border-radius:8px;margin-top:10px;border:1.5px solid var(--br)">
+        <div class="srow2" style="margin-top:8px"><span class="shi">Применится на главной</span><button class="btn r" id="clearHero">✕ Удалить</button></div>
+      </div>
+    </div>
+    <div class="ec">
+      <div class="ech"><div class="ect">🏫 Логотипы университетов</div></div>
+      <div class="ecb">
+        <div class="uz"><input type="file" accept="image/*" multiple id="upUnis">
+          <div class="uzi">🏫</div><div class="uzt">PNG с прозрачным фоном</div><div class="uzs">рек. 200×200</div>
+        </div>
+        <div id="imgs-unis" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="ec">
+      <div class="ech"><div class="ect">👩‍🏫 Фото преподавателей</div></div>
+      <div class="ecb">
+        <div class="uz"><input type="file" accept="image/*" multiple id="upTeam">
+          <div class="uzi">👩‍🏫</div><div class="uzt">Фото команды</div><div class="uzs">рек. 400×400 · квадрат</div>
+        </div>
+        <div id="imgs-team" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+      </div>
+    </div>
+    <div class="ec">
+      <div class="ech"><div class="ect">🏢 Фото офисов</div></div>
+      <div class="ecb">
+        <div class="uz"><input type="file" accept="image/*" multiple id="upOffices">
+          <div class="uzi">🏢</div><div class="uzt">Интерьер офисов</div><div class="uzs">рек. 1280×720</div>
+        </div>
+        <div id="imgs-offices" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OFFICES -->
+<div class="panel" id="p-offices">
+  <div class="shd"><h2>Офисы <span class="live">Обновляет index.html</span></h2></div>
+  <div class="og" id="og"></div>
+  <div style="margin-top:14px;text-align:right"><button class="btn p" style="padding:10px 28px" id="saveOffBtn">💾 Сохранить офисы</button></div>
+</div>
+
+<!-- REVIEWS -->
+<div class="panel" id="p-reviews">
+  <div class="shd"><h2>Отзывы <span class="live">Обновляет index.html</span></h2>
+    <button class="btn p" id="addRvBtn">+ Добавить</button>
+  </div>
+  <div class="rvg" id="rvg"></div>
+</div>
+
+<!-- PROMO -->
+<div class="panel" id="p-promo">
+  <div class="shd"><h2>Акции / Слайдер <span class="live">Обновляет index.html</span></h2>
+    <button class="btn p" id="addPromoBtn">+ Новая акция</button>
+  </div>
+  <div class="pg" id="pg"></div>
+  <div style="margin-top:14px;text-align:right"><button class="btn p" style="padding:10px 28px" id="savePromoBtn">💾 Сохранить</button></div>
+</div>
+
+<!-- TESTS -->
+<div class="panel" id="p-tests">
+  <div class="shd"><h2>Конструктор тестов</h2>
+    <div class="shdr">
+      <button class="btn g" id="expTestBtn">⬇ JSON</button>
+      <button class="btn g" id="impTestBtn">⬆ Импорт</button>
+      <input type="file" id="impFile" accept=".json" style="display:none">
+      <button class="btn p" id="addQBtn">+ Вопрос</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:0;border-bottom:2px solid var(--br);margin-bottom:18px" id="testTabs">
+    <div class="ttab on" data-t="ielts">📝 IELTS <span id="tc-ielts" style="background:var(--bl);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px">0</span></div>
+    <div class="ttab" data-t="sat">📐 SAT <span id="tc-sat" style="background:var(--bl3);color:var(--bl);font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px">0</span></div>
+    <div class="ttab" data-t="english">🗣 English <span id="tc-english" style="background:var(--bl3);color:var(--bl);font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px">0</span></div>
+    <div class="ttab" data-t="kids">🧒 Kids <span id="tc-kids" style="background:var(--bl3);color:var(--bl);font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px">0</span></div>
+  </div>
+  <div style="display:flex;gap:14px">
+    <div style="width:255px;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-family:var(--fd);font-size:13px;font-weight:700">Вопросы</span>
+        <button class="btn p" style="padding:4px 10px;font-size:11px" id="addQBtn2">+ Добавить</button>
+      </div>
+      <div id="qlist" style="max-height:480px;overflow-y:auto"></div>
+    </div>
+    <div id="qed" style="flex:1;background:var(--wh);border:1.5px solid var(--br);border-radius:var(--rx);padding:18px;min-height:200px">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--mu);text-align:center">
+        <div style="font-size:36px;opacity:.3;margin-bottom:10px">📝</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">Выберите вопрос</div>
+        <div style="font-size:11px">или добавьте новый</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:14px;display:flex;justify-content:flex-end;padding-top:12px;border-top:1.5px solid var(--br)">
+    <button class="btn p" style="padding:10px 24px" id="saveTestBtn">💾 Подтвердить тест</button>
+  </div>
+</div>
+
+<!-- TEST RESULTS -->
+<div class="panel" id="p-testres">
+  <div class="shd"><h2>Результаты тестов</h2></div>
+  <div class="sr">
+    <div class="sc"><div class="scl">IELTS</div><div class="scn" id="ri">0</div><div class="scc">пройдено</div></div>
+    <div class="sc"><div class="scl">SAT</div><div class="scn" id="rs">0</div><div class="scc">пройдено</div></div>
+    <div class="sc"><div class="scl">English Level</div><div class="scn" id="re">0</div><div class="scc">пройдено</div></div>
+    <div class="sc"><div class="scl">Kids</div><div class="scn" id="rk">0</div><div class="scc">пройдено</div></div>
+  </div>
+  <div class="tw"><table class="tbl"><thead><tr><th>Имя</th><th>Тест</th><th>Балл</th><th>Уровень</th><th>Дата</th><th></th></tr></thead><tbody id="trtb"></tbody></table></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="panel" id="p-settings">
+  <div class="shd"><h2>Настройки</h2></div>
+  <div class="sg">
+    <div class="sc2">
+      <div style="font-family:var(--fd);font-size:13px;font-weight:700;margin-bottom:14px">⚙️ Функции</div>
+      <div class="togr"><div><div class="tolb">Сайт активен</div><div class="toss">Открыт для посетителей</div></div><label class="tog"><input type="checkbox" checked id="cfg-active"><span class="togs"></span></label></div>
+      <div class="togr"><div><div class="tolb">WhatsApp виджет</div><div class="toss">Плавающая кнопка</div></div><label class="tog"><input type="checkbox" checked id="cfg-wa"><span class="togs"></span></label></div>
+      <div class="togr"><div><div class="tolb">Онлайн тесты</div><div class="toss">Публичный доступ</div></div><label class="tog"><input type="checkbox" checked id="cfg-tests"><span class="togs"></span></label></div>
+      <div class="togr"><div><div class="tolb">RU / KZ / EN</div><div class="toss">Переключатель языков</div></div><label class="tog"><input type="checkbox" checked id="cfg-lang"><span class="togs"></span></label></div>
+      <div style="margin-top:12px"><button class="btn p" id="saveSettBtn">💾 Сохранить</button></div>
+    </div>
+    <div class="sc2">
+      <div style="font-family:var(--fd);font-size:13px;font-weight:700;margin-bottom:14px">🔗 Интеграции</div>
+      <div class="fr"><label class="fl">Google Analytics</label><input class="fi" id="cfg-ga" value="G-XXXXXXXXXX"></div>
+      <div class="fr"><label class="fl">Facebook Pixel</label><input class="fi" id="cfg-fbpx" placeholder="000000000000"></div>
+      <div class="fr"><label class="fl">2GIS URL</label><input class="fi" id="cfg-2gis" value="https://2gis.kz/nur-sultan/search/GSC%20Study"></div>
+      <div><button class="btn p" id="saveIntBtn">💾 Сохранить</button></div>
+    </div>
+    <div class="sc2">
+      <div style="font-family:var(--fd);font-size:13px;font-weight:700;margin-bottom:14px">👥 Пользователи</div>
+      <div class="tw" style="margin:0;border:none"><table class="tbl"><thead><tr><th>Логин</th><th>Роль</th><th>Статус</th></tr></thead><tbody>
+        <tr><td>admin</td><td>Администратор</td><td><span class="bdg ok">Активен</span></td></tr>
+        <tr><td>manager</td><td>Менеджер</td><td><span class="bdg ok">Активен</span></td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="sc2">
+      <div style="font-family:var(--fd);font-size:13px;font-weight:700;margin-bottom:14px">📦 Данные</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn g" id="expCSVBtn">⬇ Экспорт заявок CSV</button>
+        <button class="btn g" id="expAllBtn">⬇ Полный бэкап JSON</button>
+        <button class="btn g" id="impAllBtn">⬆ Восстановить JSON</button>
+        <input type="file" id="restFile" accept=".json" style="display:none">
+        <button class="btn r" id="clearAllBtn">🗑 Сбросить все данные</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="mov" id="ml">
+  <div class="mbox">
+    <div class="mhd"><div class="mtt">Новая заявка</div><button class="mcl" data-m="ml">✕</button></div>
+    <div class="fr"><label class="fl">Имя</label><input class="fi" id="ln" placeholder="Алибек Жаксыбеков"></div>
+    <div class="fr"><label class="fl">Телефон</label><input class="fi" id="lph" type="tel" placeholder="+7 700 000 00 00"></div>
+    <div class="fr"><label class="fl">Курс</label><select class="fi" id="lco">
+      <option>IELTS Preparation</option><option>SAT Preparation</option><option>General English</option>
+      <option>Kids English</option><option>Business English</option><option>Китайский (HSK)</option>
+      <option>Поступление за рубеж</option><option>Foundation Year</option>
+    </select></div>
+    <div class="fr"><label class="fl">Источник</label><select class="fi" id="lso">
+      <option>WhatsApp</option><option>Сайт</option><option>Instagram</option>
+      <option>2ГИС</option><option>Рекомендация</option><option>Телефон</option>
+    </select></div>
+    <div class="fr"><label class="fl">Комментарий</label><textarea class="fi" id="lnt" placeholder="..." style="min-height:60px"></textarea></div>
+    <div class="mft"><button class="btn g" data-m="ml">Отмена</button><button class="btn p" id="saveLeadBtn">Сохранить</button></div>
+  </div>
+</div>
+
+<div class="mov" id="mr">
+  <div class="mbox">
+    <div class="mhd"><div class="mtt">Добавить отзыв</div><button class="mcl" data-m="mr">✕</button></div>
+    <div class="fr"><label class="fl">Имя</label><input class="fi" id="rn" placeholder="Зарина Н."></div>
+    <div class="fr"><label class="fl">Когда</label><input class="fi" id="rd" placeholder="2 нед. назад"></div>
+    <div class="fr"><label class="fl">Текст</label><textarea class="fi" id="rt" style="min-height:80px"></textarea></div>
+    <div class="fr"><label class="fl">Значок (IELTS 6.0→8.0)</label><input class="fi" id="rb"></div>
+    <div class="fr"><label class="fl">Цвет аватара</label><select class="fi" id="rc">
+      <option value="#2563EB">Синий</option><option value="#059669">Зелёный</option>
+      <option value="#7C3AED">Фиолетовый</option><option value="#C05000">Оранжевый</option>
+    </select></div>
+    <div class="mft"><button class="btn g" data-m="mr">Отмена</button><button class="btn p" id="saveRvBtn">Добавить</button></div>
+  </div>
+</div>
+
+<div class="twrap" id="tw"></div>
+
+<script>
+/* ══ GSC ADMIN v2 — clean ══ */
+
+/* ══ DATA ADAPTER — localStorage now, Supabase-ready ══
+   To connect Supabase: replace DB.set / DB.get body only. ══ */
+const DB = (function() {
+  const PFX = 'gsc_';
+  return {
+    set(key, val) { try { localStorage.setItem(PFX+key, JSON.stringify(val)); } catch(e) {} },
+    get(key, def) { try { const v=localStorage.getItem(PFX+key); return v!==null ? JSON.parse(v) : def; } catch(e) { return def; } },
+    remove(key) { try { localStorage.removeItem(PFX+key); } catch(e) {} }
+  };
+})();
+// Legacy aliases — keep existing code working
+const K = 'gsc_';
+const S = (k,v) => DB.set(k,v);
+const G = (k,d) => DB.get(k,d);
+
+// ═══════════════════════════════════════════════════════
+// CORE
+// ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════
+   GSC Data Layer v2
+   localStorage now — swap to API here later
+   ═══════════════════════════════════════════
+   To migrate to Supabase/API:
+   1. Replace GSC.get with: await supabase.from('data').select().eq('key', key)
+   2. Replace GSC.set with: await supabase.from('data').upsert({key, value: JSON.stringify(val)})
+   3. Mark functions as async and add await where needed
+*/
+const GSC = {
+  _p: 'gsc_',
+  set(k, v) {
+    try { localStorage.setItem(this._p + k, JSON.stringify(v)); return true; }
+    catch(e) { console.warn('[GSC] set failed:', k, e); return false; }
+  },
+  get(k, d) {
+    try { const v = localStorage.getItem(this._p + k); return v !== null ? JSON.parse(v) : d; }
+    catch(e) { return d; }
+  },
+  del(k) { localStorage.removeItem(this._p + k); }
+};
+/* Backwards-compat aliases */
+
+const fd = d => d.getDate().toString().padStart(2,'0')+'.'+(d.getMonth()+1).toString().padStart(2,'0')+'.'+d.getFullYear()+' '+d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+const eid = id => document.getElementById(id);
+const $ = sel => document.querySelector(sel);
+
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+const USERS = { admin:{pass:'gsc2026',role:'Администратор',name:'Администратор'}, manager:{pass:'manager123',role:'Менеджер',name:'Менеджер'} };
+let ME = null;
+
+function login() {
+  const u = eid('lu').value.trim(), p = eid('lp').value;
+  const usr = USERS[u];
+  if (usr && usr.pass === p) {
+    ME = {login:u, ...usr};
+    S('session', ME);
+    eid('le').style.display = 'none';
+    initShell();
+  } else {
+    eid('le').style.display = 'block';
+    eid('lp').value = '';
+  }
+}
+
+function logout() {
+  localStorage.removeItem(K+'session');
+  ME = null;
+  eid('sh').classList.remove('on');
+  eid('lw').style.display = 'flex';
+}
+
+function initShell() {
+  eid('lw').style.display = 'none';
+  eid('sh').classList.add('on');
+  eid('sbav').textContent = ME.name[0];
+  eid('sbun').textContent = ME.name;
+  eid('sbur').textContent = ME.role;
+  loadContent();
+  loadImages();
+  renderOffices();
+  renderReviews();
+  renderPromo();
+  renderTests();
+  renderTestRes();
+  renderDash();
+}
+
+// Auth events
+eid('lbtn').onclick = login;
+['lu','lp'].forEach(id => eid(id).addEventListener('keydown', e => { if(e.key==='Enter') login(); }));
+eid('sbout').onclick = logout;
+eid('siteLink').onclick = () => window.open('index.html','_blank');
+
+// Auto-login
+(function() {
+  const s = G('session', null);
+  if (s && USERS[s.login]) { ME = s; initShell(); }
+})();
+
+// ═══════════════════════════════════════════════════════
+// PANEL NAVIGATION
+// ═══════════════════════════════════════════════════════
+const TITLES = {dash:'Дашборд',leads:'Заявки',content:'Тексты сайта',images:'Изображения',offices:'Офисы',reviews:'Отзывы',promo:'Акции',tests:'Конструктор тестов',testres:'Результаты тестов',settings:'Настройки'};
+
+function gp(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const panel = eid('p-'+id);
+  if (panel) panel.classList.add('on');
+  document.querySelectorAll('.sbi[data-p]').forEach(i => i.classList.remove('on'));
+  const navItem = document.querySelector('.sbi[data-p="'+id+'"]');
+  if (navItem) navItem.classList.add('on');
+  eid('tbt').textContent = TITLES[id] || id;
+}
+
+document.querySelectorAll('.sbi[data-p]').forEach(el => {
+  el.onclick = () => gp(el.getAttribute('data-p'));
+});
+
+// Topbar actions
+eid('previewBtn').onclick = () => window.open('index.html','_blank');
+eid('newLeadBtn').onclick = () => openM('ml');
+eid('allLeadsBtn').onclick = () => gp('leads');
+
+// ═══════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════
+function openM(id) { eid(id).classList.add('open'); }
+function closeM(id) { eid(id).classList.remove('open'); }
+
+document.querySelectorAll('[data-m]').forEach(btn => {
+  btn.onclick = () => closeM(btn.getAttribute('data-m'));
+});
+document.querySelectorAll('.mov').forEach(m => {
+  m.onclick = e => { if(e.target===m) closeM(m.id); };
+});
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function toast(msg, type) {
+  type = type || 'i';
+  const w = eid('tw'), t = document.createElement('div');
+  t.className = 'toast '+type;
+  t.textContent = (type==='s'?'✅ ':type==='e'?'❌ ':'ℹ️ ') + msg;
+  w.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(32px)'; t.style.transition='.28s'; setTimeout(()=>t.remove(),280); }, 4000);
+}
+
+// ═══════════════════════════════════════════════════════
+// LEADS
+// ═══════════════════════════════════════════════════════
+const SL = {new:'Новая',called:'Позвонили',enrolled:'Записался'};
+const SC = {new:'wn',called:'no',enrolled:'ok'};
+const getL = () => G('leads', []);
+const setL = ls => S('leads', ls);
+
+let curF = 'all';
+
+eid('addLeadBtn2').onclick = () => openM('ml');
+eid('addRvBtn').onclick = () => openM('mr');
+
+eid('saveLeadBtn').onclick = function() {
+  const n=eid('ln').value.trim(), ph=eid('lph').value.trim();
+  if(!n||!ph) { toast('Заполните имя и телефон','e'); return; }
+  const ls=getL();
+  ls.unshift({id:Date.now(),name:n,phone:ph,course:eid('lco').value,source:eid('lso').value,note:eid('lnt').value,status:'new',date:fd(new Date()),manager:ME.name});
+  setL(ls);
+  closeM('ml');
+  toast('Заявка добавлена!','s');
+  ['ln','lph','lnt'].forEach(id => eid(id).value='');
+  renderDash();
+};
+
+function setStatus(id) {
+  const ls=getL(), l=ls.find(x=>x.id===id);
+  if(!l) return;
+  l.status = l.status==='new'?'called':l.status==='called'?'enrolled':'new';
+  setL(ls); toast('Статус: '+SL[l.status],'i'); renderDash();
+}
+function delLead(id) {
+  if(!confirm('Удалить?')) return;
+  setL(getL().filter(x=>x.id!==id)); toast('Удалено','i'); renderDash();
+}
+
+function setF(s) {
+  curF=s;
+  ['all','new','called','enrolled'].forEach(t => {
+    const b=eid('tf-'+t); if(!b) return;
+    b.style.background=t===s?'var(--wh)':'none';
+    b.style.fontWeight=t===s?'700':'500';
+    b.style.color=t===s?'var(--ink)':'var(--mu)';
+  });
+  renderLeads();
+}
+
+function renderLeads() {
+  const ls=getL(), fl=curF==='all'?ls:ls.filter(l=>l.status===curF);
+  const tb=eid('ltb'); if(!tb) return;
+  tb.innerHTML = fl.length ? fl.map((l,i) =>
+    '<tr><td>'+(i+1)+'</td><td><strong>'+l.name+'</strong></td><td>'+l.phone+'</td><td>'+l.course+'</td><td>'+l.source+'</td><td>'+(l.manager||'—')+'</td><td>'+l.date+'</td><td><span class="bdg '+SC[l.status]+'">'+SL[l.status]+'</span></td><td class="tda"><button class="tb2 e" onclick="setStatus('+l.id+')">→</button><button class="tb2 d" onclick="delLead('+l.id+')">✕</button></td></tr>'
+  ).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--mu);padding:20px">Нет заявок</td></tr>';
+}
+
+eid('exportBtn').onclick = function() {
+  const ls=getL();
+  const rows=[['ID','Имя','Телефон','Курс','Источник','Менеджер','Статус','Дата']].concat(ls.map(l=>[l.id,'"'+l.name+'"',l.phone,'"'+l.course+'"',l.source||'',l.manager||'',l.status,l.date]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='gsc_leads.csv'; a.click();
+  toast('CSV скачан ('+ls.length+' заявок)','s');
+};
+
+// ═══════════════════════════════════════════════════════
+// CONTENT
+// ═══════════════════════════════════════════════════════
+function loadContent() {
+  const C=G('content',{});
+  if(C.phrases) eid('c-phrases').value=C.phrases.join('\n');
+  if(C.split_h) eid('c-split_h').value=C.split_h;
+  if(C.split_sub) eid('c-split_sub').value=C.split_sub;
+  if(C.abroad_h) eid('c-abroad_h').value=C.abroad_h;
+  if(C.abroad_sub) eid('c-abroad_sub').value=C.abroad_sub;
+  if(C.courses_h) eid('c-courses_h').value=C.courses_h;
+  if(C.courses_sub) eid('c-courses_sub').value=C.courses_sub;
+  if(C.phone) eid('c-phone').value=C.phone;
+  if(C.wa) eid('c-wa').value=C.wa;
+  if(C.email) eid('c-email').value=C.email;
+  if(C.ig) eid('c-ig').value=C.ig;
+}
+
+function saveC(section) {
+  const C=G('content',{});
+  const v=id=>eid(id).value;
+  if(section==='phrases') C.phrases=v('c-phrases').split('\n').map(x=>x.trim()).filter(Boolean);
+  else if(section==='split') { C.split_h=v('c-split_h'); C.split_sub=v('c-split_sub'); }
+  else if(section==='abroad') { C.abroad_h=v('c-abroad_h'); C.abroad_sub=v('c-abroad_sub'); }
+  else if(section==='courses') { C.courses_h=v('c-courses_h'); C.courses_sub=v('c-courses_sub'); }
+  else if(section==='contacts') { C.phone=v('c-phone'); C.wa=v('c-wa'); C.email=v('c-email'); C.ig=v('c-ig'); }
+  S('content',C);
+  toast('Сохранено! Обновите страницу сайта чтобы увидеть изменения.','s');
+}
+
+eid('copySeoBtn').onclick = function() {
+  const t=eid('c-stitle').value, d=eid('c-sdesc').value;
+  const code='<title>'+t+'</title>\n<meta name="description" content="'+d+'"/>';
+  navigator.clipboard.writeText(code).then(()=>toast('Скопировано','s')).catch(()=>toast('Ошибно — скопируйте вручную','e'));
+};
+
+// ═══════════════════════════════════════════════════════
+// IMAGES
+// ═══════════════════════════════════════════════════════
+function uploadImg(file, key) {
+  if(!file) return;
+  if(file.size>2097152) { toast('Файл >2MB','e'); return; }
+  const r=new FileReader();
+  r.onload=e => { const imgs=G('images',{}); imgs[key]=e.target.result; S('images',imgs); const el=eid('img-'+key); if(el){el.src=e.target.result;el.style.display='block';} toast('Сохранено','s'); };
+  r.readAsDataURL(file);
+}
+
+function uploadImgs(files, key) {
+  const wrap=eid('imgs-'+key); if(!wrap) return;
+  const imgs=G('images',{}); if(!Array.isArray(imgs[key])) imgs[key]=[];
+  Array.from(files).forEach(file=>{
+    if(file.size>2097152){toast(file.name+' >2MB','e');return;}
+    const r=new FileReader();
+    r.onload=e=>{imgs[key].push(e.target.result);S('images',imgs);const img=document.createElement('img');img.src=e.target.result;img.style.cssText='height:56px;width:56px;object-fit:cover;border-radius:8px;border:1.5px solid var(--br)';wrap.appendChild(img);};
+    r.readAsDataURL(file);
+  });
+  toast(files.length+' фото загружено','s');
+}
+
+function loadImages() {
+  const imgs=G('images',{});
+  if(imgs.hero){const el=eid('img-hero');if(el){el.src=imgs.hero;el.style.display='block';}}
+}
+
+eid('upHero').onchange = e => uploadImg(e.target.files[0],'hero');
+eid('clearHero').onclick = () => { const imgs=G('images',{}); delete imgs.hero; S('images',imgs); const el=eid('img-hero'); if(el){el.src='';el.style.display='none';} toast('Удалено','i'); };
+eid('upUnis').onchange = e => uploadImgs(e.target.files,'unis');
+eid('upTeam').onchange = e => uploadImgs(e.target.files,'team');
+eid('upOffices').onchange = e => uploadImgs(e.target.files,'offpic');
+
+// ═══════════════════════════════════════════════════════
+// OFFICES
+// ═══════════════════════════════════════════════════════
+const DEF_OFF=[
+  {city:'Астана — Есиль',name:'Главный офис',addr:'ул. Сарайшык 34',hrs:'Пн–Пт 9:00–21:00 · Сб 10:00–14:00',main:true},
+  {city:'Астана — Нура',name:'Филиал Сыганак',addr:'ул. Сыганак 15',hrs:'Пн–Пт 9:00–21:00 · Сб 10:00–14:00',main:false},
+  {city:'Астана — Есиль',name:'Филиал Улы Дала',addr:'пр. Улы Дала 41/6',hrs:'Пн–Пт 9:00–21:00 · Сб 10:00–14:00',main:false},
+  {city:'Алматы',name:'Алматы — Сейфуллина',addr:'пр. Сейфуллина 574/1',hrs:'Пн–Пт 9:00–21:00 · Сб 10:00–14:00',main:false},
+];
+
+function renderOffices() {
+  const offs=G('offices',DEF_OFF), og=eid('og'); if(!og) return;
+  og.innerHTML=offs.map((o,i)=>
+    '<div class="oc'+(o.main?' ocm':'')+'"><div class="oname"><div class="odot" style="background:'+(o.main?'var(--bl)':'var(--gr)')+'"></div><input value="'+o.name+'" data-i="'+i+'" data-f="name" style="font-family:var(--fd);font-size:13px;font-weight:700;border:none;background:none;outline:none;color:var(--ink);flex:1">'+(o.main?'<span class="bdg ok">Главный</span>':'')+'</div>'+
+    '<div class="fr"><label class="fl">Город</label><input class="fi" data-i="'+i+'" data-f="city" value="'+o.city+'"></div>'+
+    '<div class="fr"><label class="fl">Адрес</label><input class="fi" data-i="'+i+'" data-f="addr" value="'+o.addr+'"></div>'+
+    '<div class="fr"><label class="fl">График</label><input class="fi" data-i="'+i+'" data-f="hrs" value="'+o.hrs+'"></div></div>'
+  ).join('');
+}
+
+eid('saveOffBtn').onclick = function() {
+  const offs=G('offices',DEF_OFF);
+  document.querySelectorAll('[data-i][data-f]').forEach(inp=>{const i=+inp.getAttribute('data-i'),f=inp.getAttribute('data-f');if(offs[i]&&f)offs[i][f]=inp.value;});
+  S('offices',offs); toast('Офисы сохранены! Обновите сайт.','s');
+};
+
+// ═══════════════════════════════════════════════════════
+// REVIEWS
+// ═══════════════════════════════════════════════════════
+const DEF_RV=[
+  {id:1,name:'Зарина Н.',avatar:'З',color:'#2563EB',date:'2 нед. назад',text:'Пришла с IELTS 6.0, нужен 7.5 для Edinburgh. За 3 месяца получила 8.0!',badge:'IELTS 6.0→8.0'},
+  {id:2,name:'Данияр А.',avatar:'Д',color:'#0065BD',date:'1 мес.',text:'Поступил в TU Munich. Помогли с SAT. Учусь почти бесплатно.',badge:'TU Munich'},
+  {id:3,name:'Айгерим С.',avatar:'А',color:'#00A060',date:'3 нед.',text:'Дочь сдала Cambridge YLE Movers через 8 месяцев.',badge:'Kids · YLE'},
+  {id:4,name:'Нурлан М.',avatar:'Н',color:'#6D28D9',date:'2 мес.',text:'SAT поднял с 1050 до 1420 за 3 месяца.',badge:'SAT 1050→1420'},
+  {id:5,name:'Малика Т.',avatar:'М',color:'#C05000',date:'1 мес.',text:'Business English B1→C1 за 4 месяца.',badge:'Business Eng'},
+  {id:6,name:'Асель Б.',avatar:'А',color:'#FF5F40',date:'3 мес.',text:'Поступила в University of Toronto с первого раза.',badge:'Univ. Toronto'},
+];
+const getRV = () => G('google_reviews', DEF_RV);
+
+function renderReviews() {
+  const g=eid('rvg'); if(!g) return;
+  g.innerHTML=getRV().map(r=>'<div class="rvc"><div class="rvh"><div class="rvav" style="background:'+r.color+'">'+r.avatar+'</div><div><div class="rvnm">'+r.name+'</div><div class="rvdt">'+r.date+'</div></div><button class="tb2 d" style="margin-left:auto" onclick="delRv('+r.id+')">✕</button></div><div class="rvst">★★★★★</div><div class="rvtx">'+r.text+'</div>'+( r.badge?'<div class="rvbd">'+r.badge+'</div>':'')+'</div>').join('');
+}
+
+eid('saveRvBtn').onclick = function() {
+  const n=eid('rn').value.trim(), tx=eid('rt').value.trim();
+  if(!n||!tx){toast('Заполните имя и текст','e');return;}
+  const rvs=getRV();
+  rvs.unshift({id:Date.now(),name:n,avatar:n[0],color:eid('rc').value,date:eid('rd').value||'Сегодня',text:tx,badge:eid('rb').value});
+  S('google_reviews',rvs); renderReviews(); closeM('mr');
+  toast('Отзыв добавлен! Обновите сайт.','s');
+};
+
+function delRv(id) { S('google_reviews',getRV().filter(r=>r.id!==id)); renderReviews(); toast('Удалён','i'); }
+
+// ═══════════════════════════════════════════════════════
+// PROMO
+// ═══════════════════════════════════════════════════════
+const DEF_PR=[
+  {id:1,tag:'🎓 Поступление',title:'Учёба в Великобритании',sub:'Oxford, Cambridge, UCL — от А до Я'},
+  {id:2,tag:'📝 IELTS',title:'IELTS Intensive — апрель',sub:'Гарантируем повышение балла'},
+  {id:3,tag:'🇩🇪 Германия',title:'Учёба за €150/год',sub:'Бесплатное образование в Германии'},
+];
+const getPR = () => G('promo_slides', DEF_PR);
+
+function renderPromo() {
+  const pg=eid('pg'); if(!pg) return;
+  pg.innerHTML=getPR().map((s,i)=>'<div class="pcard"><div><label class="fl">Тег</label><input class="fi" data-pi="'+i+'" data-pf="tag" value="'+s.tag+'"></div><div><label class="fl">Заголовок</label><input class="fi" data-pi="'+i+'" data-pf="title" value="'+s.title+'"></div><div><label class="fl">Подзаголовок</label><input class="fi" data-pi="'+i+'" data-pf="sub" value="'+s.sub+'"></div><button class="tb2 d" onclick="delPR('+s.id+')" style="align-self:flex-end">✕</button></div>').join('');
+}
+
+eid('addPromoBtn').onclick = function() {
+  const p=getPR(); p.push({id:Date.now(),tag:'🆕 Новое',title:'Название акции',sub:'Описание'}); S('promo_slides',p); renderPromo();
+};
+function delPR(id){S('promo_slides',getPR().filter(p=>p.id!==id));renderPromo();}
+eid('savePromoBtn').onclick = function() {
+  const p=getPR();
+  document.querySelectorAll('[data-pi][data-pf]').forEach(inp=>{const i=+inp.getAttribute('data-pi'),f=inp.getAttribute('data-pf');if(p[i]&&f)p[i][f]=inp.value;});
+  S('promo_slides',p); toast('Акции сохранены! Обновите сайт.','s');
+};
+
+// ═══════════════════════════════════════════════════════
+// TEST BUILDER
+// ═══════════════════════════════════════════════════════
+const TM={ielts:{name:'IELTS',secs:['Vocabulary','Grammar','Reading','Listening']},sat:{name:'SAT',secs:['Reading & Writing','Math']},english:{name:'General English',secs:['A1','A2','B1','B2','C1','C2']},kids:{name:'Kids English',secs:['Starter','Movers','Flyers','KET']}};
+let cType='ielts', cQ=null;
+const getTQ=t=>G('test_q_'+t,[]);
+const setTQ=(t,qs)=>S('test_q_'+t,qs);
+
+document.querySelectorAll('.ttab').forEach(tab=>{
+  tab.onclick=()=>{ document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('on')); tab.classList.add('on'); cType=tab.getAttribute('data-t'); cQ=null; renderTests(); };
+});
+
+function renderTests() {
+  Object.keys(TM).forEach(t=>{const el=eid('tc-'+t);if(el)el.textContent=getTQ(t).length;});
+  const qs=getTQ(cType), list=eid('qlist'); if(!list) return;
+  list.innerHTML=qs.length?qs.map((q,i)=>'<div class="qitem'+(cQ===i?' qsel':'')+'" onclick="selQ('+i+')"><div class="qdel" onclick="event.stopPropagation();delQ('+i+')">✕</div><div class="qnum">'+(q.section||TM[cType].secs[0])+' · Q'+(i+1)+'</div><div class="qtxt">'+(q.text||'(пусто)')+'</div></div>').join(''):'<div style="font-size:11px;color:var(--mu);text-align:center;padding:20px">Нет вопросов</div>';
+  renderQEd();
+}
+
+function selQ(i){cQ=i;renderTests();}
+
+function renderQEd() {
+  const ed=eid('qed'); if(!ed) return;
+  const qs=getTQ(cType);
+  if(cQ===null||!qs[cQ]){ed.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--mu);text-align:center"><div style="font-size:36px;opacity:.3;margin-bottom:10px">📝</div><div style="font-size:13px;font-weight:600;margin-bottom:4px">Выберите вопрос</div><div style="font-size:11px">или добавьте новый</div></div>';return;}
+  const q=qs[cQ], secs=TM[cType].secs;
+  const sopts=secs.map(s=>'<option'+(q.section===s?' selected':'')+'>'+s+'</option>').join('');
+  const lets=['A','B','C','D'];
+  ed.innerHTML='<div style="font-family:var(--fd);font-size:14px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid var(--br)">Вопрос '+(cQ+1)+'</div>'+
+    '<div class="fr"><label class="fl">Раздел</label><select class="fi" id="qsec" oninput="updQ()">'+sopts+'</select></div>'+
+    '<div class="fr"><label class="fl">Текст вопроса</label><textarea class="fi" id="qtext" oninput="updQ()" style="min-height:60px">'+(q.text||'')+'</textarea></div>'+
+    '<div class="fr"><label class="fl">Подсказка (опционально)</label><input class="fi" id="qhint" oninput="updQ()" value="'+(q.hint||'')+'"></div>'+
+    '<div class="fr"><label class="fl">Варианты (отметьте правильный)</label><div style="display:flex;flex-direction:column;gap:7px">'+(q.options||['','','','']).map((opt,oi)=>'<div style="display:flex;align-items:center;gap:7px"><div style="width:26px;height:26px;border-radius:50%;background:'+(q.answer===oi?'var(--gr)':'var(--wh2)')+';border:1.5px solid '+(q.answer===oi?'var(--gr)':'var(--br2)')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:'+(q.answer===oi?'#fff':'var(--mu)')+'">'+lets[oi]+'</div><input style="flex:1;padding:7px 10px;border:1.5px solid '+(q.answer===oi?'var(--gr)':'var(--br2)')+';background:'+(q.answer===oi?'#F0FDF4':'var(--wh)')+';border-radius:8px;font-size:12px;outline:none" id="opt-'+oi+'" value="'+opt+'" oninput="updOpt('+oi+')"><input type="radio" name="ans" '+(q.answer===oi?'checked':'')+' onchange="setAns('+oi+')" style="accent-color:var(--gr);width:15px;height:15px"><span style="font-size:9px;color:var(--mu);white-space:nowrap">верный</span></div>').join('')+'</div></div>'+
+    '<div style="display:flex;gap:8px;margin-top:6px;padding-top:12px;border-top:1px solid var(--br)"><button class="tb2 e" onclick="dupQ('+cQ+')">⧉ Дублировать</button><button class="tb2 d" onclick="delQ('+cQ+')">✕ Удалить</button></div>';
+}
+
+function updQ(){const qs=getTQ(cType);if(cQ===null||!qs[cQ])return;qs[cQ].section=eid('qsec').value;qs[cQ].text=eid('qtext').value;qs[cQ].hint=eid('qhint').value;setTQ(cType,qs);const it=document.querySelectorAll('.qitem')[cQ];if(it)it.querySelector('.qtxt').textContent=qs[cQ].text||'(пусто)';}
+function updOpt(oi){const qs=getTQ(cType);if(cQ===null||!qs[cQ])return;if(!qs[cQ].options)qs[cQ].options=['','','',''];qs[cQ].options[oi]=eid('opt-'+oi).value;setTQ(cType,qs);}
+function setAns(oi){const qs=getTQ(cType);if(cQ===null||!qs[cQ])return;qs[cQ].answer=oi;setTQ(cType,qs);renderQEd();}
+
+function addQ(){const qs=getTQ(cType);qs.push({section:TM[cType].secs[0],text:'',hint:'',type:'mcq',options:['','','',''],answer:0});setTQ(cType,qs);cQ=qs.length-1;renderTests();toast('Вопрос добавлен','s');}
+function delQ(i){const qs=getTQ(cType);qs.splice(i,1);setTQ(cType,qs);if(cQ>=qs.length)cQ=qs.length>0?qs.length-1:null;renderTests();}
+function dupQ(i){const qs=getTQ(cType);qs.splice(i+1,0,JSON.parse(JSON.stringify(qs[i])));setTQ(cType,qs);cQ=i+1;renderTests();toast('Дублировано','s');}
+
+eid('addQBtn').onclick = addQ;
+eid('addQBtn2').onclick = addQ;
+eid('saveTestBtn').onclick = () => toast('Тест «'+TM[cType].name+'» — '+getTQ(cType).length+' вопросов сохранено','s');
+
+eid('expTestBtn').onclick = function(){
+  const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(getTQ(cType),null,2));a.download='gsc_test_'+cType+'.json';a.click();toast('JSON скачан','s');
+};
+eid('impTestBtn').onclick = () => eid('impFile').click();
+eid('impFile').onchange = function(){
+  const f=this.files[0];if(!f)return;
+  const r=new FileReader();r.onload=e=>{try{const qs=JSON.parse(e.target.result);if(!Array.isArray(qs))throw new Error('Нужен массив');setTQ(cType,qs);cQ=null;renderTests();toast('Импортировано: '+qs.length+' вопросов','s');}catch(err){toast('Ошибка JSON: '+err.message,'e');}};r.readAsText(f);
+};
+
+// ═══════════════════════════════════════════════════════
+// TEST RESULTS
+// ═══════════════════════════════════════════════════════
+function renderTestRes() {
+  const res=G('test_results',[]);
+  const cn={ielts:0,sat:0,english:0,kids:0};
+  res.forEach(r=>{if(cn[r.type]!==undefined)cn[r.type]++;});
+  [['ri','ielts'],['rs','sat'],['re','english'],['rk','kids']].forEach(([id,t])=>{const el=eid(id);if(el)el.textContent=cn[t];});
+  const tb=eid('trtb');if(!tb)return;
+  tb.innerHTML=res.length?res.map(r=>'<tr><td>'+(r.name||'—')+'</td><td>'+r.typeName+'</td><td><strong>'+r.score+'</strong>/'+r.total+' ('+Math.round(r.score/r.total*100)+'%)</td><td><strong>'+r.level+'</strong></td><td>'+r.date+'</td><td class="tda"><button class="tb2 e">📞</button></td></tr>').join(''):'<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:20px">Результаты появятся после прохождения тестов</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════
+eid('saveSettBtn').onclick = function(){S('cfg',{active:eid('cfg-active').checked,wa:eid('cfg-wa').checked,tests:eid('cfg-tests').checked,lang:eid('cfg-lang').checked});toast('Настройки сохранены','s');};
+eid('saveIntBtn').onclick = function(){S('integrations',{ga:eid('cfg-ga').value,fbpx:eid('cfg-fbpx').value,twoGis:eid('cfg-2gis').value});toast('Интеграции сохранены','s');};
+eid('expCSVBtn').onclick = function(){eid('exportBtn').click();};
+eid('expAllBtn').onclick = function(){
+  const keys=['leads','content','offices','google_reviews','promo_slides','test_q_ielts','test_q_sat','test_q_english','test_q_kids','images','cfg','integrations'];
+  const data={_exported:new Date().toISOString()};keys.forEach(k=>{const v=G(k,null);if(v!==null)data[k]=v;});
+  const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));a.download='gsc_backup.json';a.click();toast('Бэкап скачан','s');
+};
+eid('impAllBtn').onclick = () => eid('restFile').click();
+eid('restFile').onchange = function(){
+  const f=this.files[0];if(!f)return;
+  const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);Object.keys(d).filter(k=>!k.startsWith('_')).forEach(k=>S(k,d[k]));toast('Данные восстановлены! Перезагрузка...','s');setTimeout(()=>location.reload(),2000);}catch(err){toast('Ошибка: '+err.message,'e');}};r.readAsText(f);
+};
+eid('clearAllBtn').onclick = function(){
+  if(!confirm('Удалить ВСЕ данные GSC? Необратимо!'))return;
+  ['leads','content','offices','google_reviews','promo_slides','test_q_ielts','test_q_sat','test_q_english','test_q_kids','images','cfg','integrations','session'].forEach(k=>localStorage.removeItem(K+k));
+  toast('Данные удалены. Перезагрузка...','e');setTimeout(()=>location.reload(),2000);
+};
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function renderDash() {
+  const ls=getL(), newC=ls.filter(l=>l.status==='new').length, enrolled=ls.filter(l=>l.status==='enrolled').length;
+  eid('s1').textContent=ls.length; eid('s1c').textContent='Новых: '+newC;
+  eid('lbadge').textContent=newC;
+  eid('s2').textContent=G('test_results',[]).length;
+  eid('s4').textContent=ls.length?Math.round(enrolled/ls.length*100)+'%':'—';
+  eid('s4c').textContent=enrolled+' из '+ls.length+' записались';
+  const days=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],vals=[3,7,5,9,4,6,ls.length%8],mx=Math.max(...vals,1);
+  eid('chart').innerHTML=vals.map((v,i)=>'<div class="bit"><div class="bva">'+v+'</div><div class="bar" style="height:'+( Math.round(v/mx*75)+4)+'px"></div><div class="bla">'+days[i]+'</div></div>').join('');
+  eid('dtb').innerHTML=ls.slice(0,6).length?ls.slice(0,6).map(l=>'<tr><td><strong>'+l.name+'</strong></td><td>'+l.phone+'</td><td>'+l.course+'</td><td>'+l.source+'</td><td>'+l.date+'</td><td><span class="bdg '+SC[l.status]+'">'+SL[l.status]+'</span></td><td class="tda"><button class="tb2 e" onclick="setStatus('+l.id+')">→</button></td></tr>').join(''):'<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:16px">Нет заявок. <button class="tb2 e" onclick="openM(\'ml\')">Добавить →</button></td></tr>';
+  renderLeads();
+}
+
+</script>
+</body>
+</html>
