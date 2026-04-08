@@ -472,6 +472,12 @@ input,textarea,select{font-family:var(--f)}
     <div class="ttab" data-t="english">🗣 English <span id="tc-english" style="background:var(--bl3);color:var(--bl);font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px">0</span></div>
     <div class="ttab" data-t="kids">🧒 Kids <span id="tc-kids" style="background:var(--bl3);color:var(--bl);font-size:9px;font-weight:800;padding:1px 5px;border-radius:100px">0</span></div>
   </div>
+  <div class="sc2" style="margin:-6px 0 16px">
+    <div style="font-family:var(--fd);font-size:13px;font-weight:800;margin-bottom:8px">✍️ Writing (после теста)</div>
+    <div style="font-size:11px;color:var(--mu);line-height:1.5;margin-bottom:10px">Этот prompt появится у студента после прохождения вопросов. Текст Writing сохранится и будет виден в результатах.</div>
+    <textarea class="fi" id="wp" style="min-height:90px;resize:vertical" placeholder="Например: Describe a memorable journey you took and explain why it was important for you."></textarea>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px"><button class="btn p" id="saveWpBtn">💾 Сохранить prompt</button></div>
+  </div>
   <div style="display:flex;gap:14px">
     <div style="width:255px;flex-shrink:0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -841,6 +847,7 @@ function gp(id) {
   if (id === 'offices') renderOffices();
   if (id === 'reviews') renderReviews();
   if (id === 'promo')   renderPromo();
+  if (id === 'tests')   renderTests();
   if (id === 'testres') renderTestResults();
   if (id === 'content') loadContent();
 }
@@ -1128,6 +1135,301 @@ async function delPromo(id) {
   renderPromo();
   toast('Удалено','i');
 }
+
+/* ── TEST BUILDER ── */
+let curTestType = 'ielts';
+let qsCache = { ielts: [], sat: [], english: [], kids: [] };
+let curQId = null;
+let contentCache = null;
+
+function normRowToQ(row) {
+  // Supabase schema: section/question/hint/options/answer
+  const o = row.options || row.o || row.opts;
+  const arr = Array.isArray(o)
+    ? o
+    : (typeof o === 'string'
+        ? (() => { try { return JSON.parse(o); } catch(e) { return null; } })()
+        : null);
+  const q = {
+    id: row.id,
+    sort_order: row.sort_order ?? row.sort ?? 0,
+    s: row.section ?? row.s ?? '',
+    t: row.question ?? row.t ?? row.text ?? '',
+    h: row.hint ?? row.h ?? '',
+    o: arr || [row.opt_a, row.opt_b, row.opt_c, row.opt_d].filter(x => x !== undefined),
+    a: (row.answer ?? row.a ?? row.answer_index ?? 0)
+  };
+  if (!Array.isArray(q.o) || q.o.length < 4) {
+    // Guarantee 4 options for UI
+    const base = Array.isArray(q.o) ? q.o.slice(0, 4) : [];
+    while (base.length < 4) base.push('');
+    q.o = base;
+  } else {
+    q.o = q.o.slice(0, 4);
+  }
+  q.a = Math.max(0, Math.min(3, parseInt(q.a, 10) || 0));
+  return q;
+}
+
+function qToRowPayload(type, q) {
+  // Matches Supabase schema exactly.
+  return {
+    test_type: type,
+    sort_order: q.sort_order ?? 0,
+    section: q.s || '',
+    question: q.t || '',
+    hint: q.h || '',
+    options: q.o || ['', '', '', ''],
+    answer: q.a ?? 0
+  };
+}
+
+function renderQList() {
+  const list = eid('qlist');
+  if (!list) return;
+  const qs = qsCache[curTestType] || [];
+  list.innerHTML = qs.map(q => {
+    const on = (q.id === curQId);
+    const title = (q.t || '').trim() || '(без текста)';
+    return `<div class="qit ${on ? 'on' : ''}" onclick="selQ(${q.id})">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="width:24px;height:24px;border-radius:8px;background:${on ? 'var(--bl)' : 'var(--wh2)'};color:${on ? '#fff' : 'var(--mu)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">${String(qs.indexOf(q)+1)}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;color:var(--ink);line-height:1.25">${esc(title).slice(0, 80)}</div>
+          <div style="font-size:10px;color:var(--mu);margin-top:2px">${esc(q.s || '')}</div>
+        </div>
+        <button class="qdel" onclick="event.stopPropagation(); delQ(${q.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('') || `<div style="padding:14px;border:1.5px dashed var(--br2);border-radius:14px;color:var(--mu);font-size:12px">Вопросов пока нет. Нажми “+ Вопрос”.</div>`;
+}
+
+function renderQEditor(q) {
+  const wrap = eid('qed');
+  if (!wrap) return;
+  if (!q) {
+    wrap.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--mu);text-align:center">
+      <div style="font-size:36px;opacity:.3;margin-bottom:10px">📝</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Выберите вопрос</div>
+      <div style="font-size:11px">или добавьте новый</div>
+    </div>`;
+    return;
+  }
+  const opt = (q.o || ['', '', '', '']).map(function(x){
+    if (x && typeof x === 'object') return x;
+    return { text: String(x||''), img: '' };
+  });
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-family:var(--fd);font-size:14px;font-weight:800">Вопрос</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn g" onclick="dupQ()">Дублировать</button>
+        <button class="btn r" onclick="delQ(${q.id})">Удалить</button>
+      </div>
+    </div>
+    <div class="fr"><label class="fl">Раздел (опционально)</label><input class="fi" id="qe-s" value="${escAttr(q.s||'')}" placeholder="Grammar / Reading"></div>
+    <div class="fr"><label class="fl">Текст вопроса</label><textarea class="fi" id="qe-t" style="min-height:90px">${esc(q.t||'')}</textarea></div>
+    <div class="fr"><label class="fl">Подсказка (опционально)</label><textarea class="fi" id="qe-h" style="min-height:60px" placeholder="Подсказка…">${esc(q.h||'')}</textarea></div>
+    <div class="fr"><label class="fl">Варианты A/B/C/D (текст + картинка опционально)</label>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${['A','B','C','D'].map((l,i)=>`
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div style="width:26px;height:26px;border-radius:50%;background:var(--wh2);border:1.5px solid var(--br2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--mu)">${l}</div>
+            <input class="fi" style="flex:1;min-width:220px" id="qe-o${i}" value="${escAttr(opt[i].text||'')}" placeholder="Вариант ${l} (текст)" />
+            <input class="fi" style="flex:1;min-width:220px" id="qe-oi${i}" value="${escAttr(opt[i].img||'')}" placeholder="Картинка URL (опционально)" />
+            <input type="file" accept="image/*" id="qe-of${i}" style="display:none" onchange="optFile(${i}, this.files[0])" />
+            <button class="btn g" type="button" onclick="eid('qe-of${i}').click()">🖼 Загрузить</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mu);white-space:nowrap">
+              <input type="radio" name="qe-a" value="${i}" ${q.a===i?'checked':''}/> верный
+            </label>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;justify-content:flex-end">
+      <button class="btn p" style="padding:10px 24px" onclick="saveQ()">💾 Сохранить вопрос</button>
+    </div>
+  `;
+}
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function escAttr(s){ return esc(s).replace(/\n/g,' '); }
+
+window.optFile = function(i, file){
+  if(!file) return;
+  if(file.size > 600*1024){ toast('Картинка слишком большая (макс ~600KB)', 'e'); return; }
+  var r = new FileReader();
+  r.onload = function(e){
+    var inp = eid('qe-oi'+i);
+    if(inp) inp.value = String(e.target.result || '');
+    toast('Картинка добавлена в вариант', 's');
+  };
+  r.readAsDataURL(file);
+};
+
+async function loadQuestions(type) {
+  const rows = await DB.getQuestions(type);
+  const qs = (rows || []).map(normRowToQ).sort((a,b)=> (a.sort_order||0)-(b.sort_order||0));
+  qsCache[type] = qs;
+  // Counters
+  const c = eid('tc-'+type);
+  if (c) c.textContent = String(qs.length);
+}
+
+async function renderTests() {
+  try {
+    await Promise.all(['ielts','sat','english','kids'].map(loadQuestions));
+    if (!contentCache) contentCache = await DB.getContent();
+    const wp = eid('wp');
+    if (wp) wp.value = (contentCache['writing_prompt_' + curTestType] || '');
+    curQId = (qsCache[curTestType] && qsCache[curTestType][0]) ? qsCache[curTestType][0].id : null;
+    renderQList();
+    renderQEditor(qsCache[curTestType].find(x => x.id === curQId));
+  } catch(e) {
+    toast('Ошибка загрузки тестов: ' + e.message, 'e');
+  }
+}
+
+window.selQ = function(id) {
+  curQId = id;
+  renderQList();
+  const q = (qsCache[curTestType] || []).find(x => x.id === id);
+  renderQEditor(q);
+};
+
+async function addQ() {
+  const base = { sort_order: (qsCache[curTestType]?.length || 0) + 1, s:'', t:'', h:'', o:[{text:'',img:''},{text:'',img:''},{text:'',img:''},{text:'',img:''}], a:0 };
+  try {
+    const created = await DB.addQuestion(qToRowPayload(curTestType, base));
+    // created may be representation array depending on Prefer
+    const row = Array.isArray(created) ? created[0] : created;
+    await loadQuestions(curTestType);
+    if (row && row.id) curQId = row.id;
+    renderQList();
+    const q = (qsCache[curTestType] || []).find(x => x.id === curQId);
+    renderQEditor(q);
+    toast('Вопрос добавлен', 's');
+  } catch(e) {
+    toast('Не удалось добавить вопрос: ' + e.message, 'e');
+  }
+}
+
+window.delQ = async function(id) {
+  if (!confirm('Удалить вопрос?')) return;
+  try {
+    await DB.deleteQuestion(id);
+    await loadQuestions(curTestType);
+    curQId = (qsCache[curTestType] && qsCache[curTestType][0]) ? qsCache[curTestType][0].id : null;
+    renderQList();
+    renderQEditor(qsCache[curTestType].find(x => x.id === curQId));
+    toast('Удалено', 'i');
+  } catch(e) { toast('Ошибка удаления: ' + e.message, 'e'); }
+};
+
+async function saveQ() {
+  const q = (qsCache[curTestType] || []).find(x => x.id === curQId);
+  if (!q) return;
+  const s = eid('qe-s')?.value || '';
+  const t = eid('qe-t')?.value || '';
+  const h = eid('qe-h')?.value || '';
+  const o = [0,1,2,3].map(i => ({ text:(eid('qe-o'+i)?.value||''), img:(eid('qe-oi'+i)?.value||'') }));
+  const a = parseInt((document.querySelector('input[name="qe-a"]:checked')||{}).value, 10);
+  const upd = { ...q, s, t, h, o, a: isFinite(a) ? a : 0 };
+  try {
+    await DB.updateQuestion(q.id, qToRowPayload(curTestType, upd));
+    await loadQuestions(curTestType);
+    renderQList();
+    renderQEditor((qsCache[curTestType] || []).find(x => x.id === curQId));
+    toast('Сохранено', 's');
+  } catch(e) {
+    toast('Не удалось сохранить: ' + e.message, 'e');
+  }
+}
+
+async function dupQ() {
+  const q = (qsCache[curTestType] || []).find(x => x.id === curQId);
+  if (!q) return;
+  try {
+    await DB.addQuestion(qToRowPayload(curTestType, { ...q, id: undefined, sort_order: (q.sort_order||0) + 1 }));
+    await loadQuestions(curTestType);
+    renderQList();
+    toast('Дубликат создан', 's');
+  } catch(e) { toast('Ошибка: ' + e.message, 'e'); }
+}
+
+function exportTestsJson() {
+  const out = {};
+  ['ielts','sat','english','kids'].forEach(t => {
+    out[t] = (qsCache[t] || []).map(q => ({ s:q.s, t:q.t, h:q.h, o:q.o, a:q.a }));
+  });
+  const a = document.createElement('a');
+  a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(out, null, 2));
+  a.download = 'gsc_test_questions.json';
+  a.click();
+  toast('JSON скачан', 's');
+}
+
+async function importTestsJson(file) {
+  const txt = await file.text();
+  const data = JSON.parse(txt);
+  const types = ['ielts','sat','english','kids'];
+  for (const type of types) {
+    if (!Array.isArray(data[type])) continue;
+    // naive import: append
+    for (let i=0;i<data[type].length;i++){
+      const q = data[type][i] || {};
+      await DB.addQuestion(qToRowPayload(type, { sort_order: i+1, s:q.s||'', t:q.t||'', h:q.h||'', o:q.o||['','','',''], a:q.a||0 }));
+    }
+  }
+  await renderTests();
+  toast('Импорт завершён', 's');
+}
+
+// Wire events once
+(function initTestBuilderUI(){
+  const tabs = document.getElementById('testTabs');
+  if (tabs && !tabs._wired) {
+    tabs._wired = true;
+    tabs.querySelectorAll('.ttab').forEach(tab => {
+      tab.addEventListener('click', async () => {
+        tabs.querySelectorAll('.ttab').forEach(t => t.classList.remove('on'));
+        tab.classList.add('on');
+        curTestType = tab.getAttribute('data-t') || 'ielts';
+        await loadQuestions(curTestType);
+        if (!contentCache) contentCache = await DB.getContent();
+        const wp = eid('wp');
+        if (wp) wp.value = (contentCache['writing_prompt_' + curTestType] || '');
+        curQId = (qsCache[curTestType] && qsCache[curTestType][0]) ? qsCache[curTestType][0].id : null;
+        renderQList();
+        renderQEditor((qsCache[curTestType] || []).find(x => x.id === curQId));
+      });
+    });
+  }
+  eid('addQBtn')?.addEventListener('click', addQ);
+  eid('addQBtn2')?.addEventListener('click', addQ);
+  eid('saveTestBtn')?.addEventListener('click', () => toast('Готово. Изменения уже сохранены в базе.', 's'));
+  eid('expTestBtn')?.addEventListener('click', exportTestsJson);
+  eid('impTestBtn')?.addEventListener('click', () => eid('impFile')?.click());
+  eid('impFile')?.addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    try { await importTestsJson(f); } catch(err) { toast('Ошибка импорта: ' + err.message, 'e'); }
+    e.target.value = '';
+  });
+
+  eid('saveWpBtn')?.addEventListener('click', async () => {
+    try{
+      const wp = eid('wp'); if(!wp) return;
+      const val = String(wp.value || '').trim();
+      await DB.setContent('writing_prompt_' + curTestType, val);
+      contentCache = contentCache || {};
+      contentCache['writing_prompt_' + curTestType] = val;
+      toast('Writing prompt сохранён', 's');
+    } catch(err){
+      toast('Ошибка сохранения prompt: ' + err.message, 'e');
+    }
+  });
+})();
 
 /* ── TEST RESULTS ── */
 async function renderTestResults() {

@@ -15,6 +15,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Manrope:wght@600;700;800;900&display=swap" rel="stylesheet"/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  "name": "GSC Study",
+  "description": "IELTS, SAT, курсы английского и поступление за рубеж. Астана, Алматы.",
+  "url": "https://gscstudy.kz/",
+  "logo": "https://gscstudy.kz/logo.png",
+  "telephone": "+7 700 127 77 88",
+  "sameAs": ["https://instagram.com/gscstudy.qaz"],
+  "address": [
+    { "@type":"PostalAddress", "addressLocality":"Астана", "streetAddress":"ул. Сарайшык 34" },
+    { "@type":"PostalAddress", "addressLocality":"Астана", "streetAddress":"ул. Сыганак 15" },
+    { "@type":"PostalAddress", "addressLocality":"Астана", "streetAddress":"пр. Улы Дала 41/6" },
+    { "@type":"PostalAddress", "addressLocality":"Алматы", "streetAddress":"пр. Сейфуллина 574/1" }
+  ]
+}
+</script>
 <style>
 
 :root{
@@ -379,6 +397,7 @@ a{text-decoration:none;color:inherit}
 .footer-links{display:flex;flex-direction:column;gap:9px}
 .footer-link{font-size:13px;font-weight:300;color:rgba(255,255,255,.4);transition:.2s}
 .footer-link:hover{color:var(--lime)}
+.footer-link--nowrap{white-space:nowrap}
 .footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
 .footer-copy{font-size:12px;font-weight:300;color:rgba(255,255,255,.25)}
 .footer-badges{display:flex;gap:8px}
@@ -840,7 +859,7 @@ a{text-decoration:none;color:inherit}
 <nav class="nav" id="nav">
   <div class="nav-inner">
     <a href="#" class="logo">
-      <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2720%27%20fill%3D%27%232563EB%27/%3E%3Ctext%20x%3D%2750%27%20y%3D%2770%27%20text-anchor%3D%27middle%27%20font-size%3D%2758%27%20font-weight%3D%27900%27%20font-family%3D%27Arial%27%20fill%3D%27white%27%3EG%3C/text%3E%3C/svg%3E" class="logo-img" alt="GSC Study"/>
+      <img src="logo.png" class="logo-img" alt="GSC Study"/>
     </a>
     <div class="nav-links">
       <a href="abroad.html" class="nl" data-i18n="nav_abroad">За рубеж</a>
@@ -867,7 +886,7 @@ a{text-decoration:none;color:inherit}
   <div class="mob-overlay" onclick="closeMenu()"></div>
   <div class="mob-menu">
     <div class="mob-head">
-      <a href="#" class="logo" onclick="closeMenu()"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2720%27%20fill%3D%27%232563EB%27/%3E%3Ctext%20x%3D%2750%27%20y%3D%2770%27%20text-anchor%3D%27middle%27%20font-size%3D%2758%27%20font-weight%3D%27900%27%20font-family%3D%27Arial%27%20fill%3D%27white%27%3EG%3C/text%3E%3C/svg%3E" class="logo-img" alt="GSC Study"/></a>
+      <a href="#" class="logo" onclick="closeMenu()"><img src="logo.png" class="logo-img" alt="GSC Study"/></a>
       <div class="mob-x" onclick="closeMenu()">✕</div>
     </div>
     <div class="mob-links">
@@ -897,13 +916,13 @@ a{text-decoration:none;color:inherit}
     </div>
     <div class="hero-right">
       <div class="path-select-block rv">
-        <div class="psb-head">С чего начнётся <em>твой путь?</em></div>
+        <div class="psb-head" data-i18n="psb_head">С чего начнётся <em>твой путь?</em></div>
 
         <a href="courses.html#english" class="psb-card psb-english">
           <div class="psb-icon">🗣</div>
           <div class="psb-body">
-            <div class="psb-title">Хочу подтянуть английский</div>
-            <div class="psb-sub">Для работы, путешествий или общения</div>
+            <div class="psb-title" data-i18n="psb_1_t">Хочу подтянуть английский</div>
+            <div class="psb-sub" data-i18n="psb_1_s">Для работы, путешествий или общения</div>
           </div>
           <div class="psb-arr">→</div>
         </a>
@@ -911,8 +930,8 @@ a{text-decoration:none;color:inherit}
         <a href="courses.html#ielts" class="psb-card psb-exams">
           <div class="psb-icon">📝</div>
           <div class="psb-body">
-            <div class="psb-title">Нужен высокий балл для сертификата</div>
-            <div class="psb-sub">Интенсивная подготовка к IELTS и SAT</div>
+            <div class="psb-title" data-i18n="psb_2_t">Нужен высокий балл для сертификата</div>
+            <div class="psb-sub" data-i18n="psb_2_s">Интенсивная подготовка к IELTS и SAT</div>
           </div>
           <div class="psb-arr">→</div>
         </a>
@@ -920,8 +939,8 @@ a{text-decoration:none;color:inherit}
         <a href="abroad.html" class="psb-card psb-abroad">
           <div class="psb-icon">🌍</div>
           <div class="psb-body">
-            <div class="psb-title">Мечтаю учиться в другой стране</div>
-            <div class="psb-sub">UK, Германия, Канада, ОАЭ и ещё 15+ стран</div>
+            <div class="psb-title" data-i18n="psb_3_t">Мечтаю учиться в другой стране</div>
+            <div class="psb-sub" data-i18n="psb_3_s">UK, Германия, Канада, ОАЭ и ещё 15+ стран</div>
           </div>
           <div class="psb-arr">→</div>
         </a>
@@ -1167,17 +1186,19 @@ a{text-decoration:none;color:inherit}
   <div class="container">
     <div class="footer-grid">
       <div>
-        <div class="footer-brand"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2720%27%20fill%3D%27%232563EB%27/%3E%3Ctext%20x%3D%2750%27%20y%3D%2770%27%20text-anchor%3D%27middle%27%20font-size%3D%2758%27%20font-weight%3D%27900%27%20font-family%3D%27Arial%27%20fill%3D%27white%27%3EG%3C/text%3E%3C/svg%3E" class="footer-logo-img" alt="GSC Study"/></div>
+        <div class="footer-brand">
+          <img src="logo.png" class="footer-logo-img" alt="GSC Study"/>
+        </div>
         
         <div class="footer-socs">
           <a href="https://instagram.com/gscstudy.qaz" target="_blank" class="fsoc">📷</a>
           <a href="https://wa.me/77718080828" target="_blank" class="fsoc">💬</a>
-          <a href="/cdn-cgi/l/email-protection#abc2c5cdc4ebccd8c8cec5dfced985c0d1" class="fsoc">✉️</a>
+          <a href="mailto:[email protected]" class="fsoc">✉️</a>
           <a href="tel:+77001277788" class="fsoc">📞</a>
         </div>
         <div class="footer-accreds">
-          <img src="bc-ielts.png" class="footer-bc-logo" alt="British Council IELTS"/>
-          <img src="icef.jpg" class="footer-icef-logo" alt="ICEF Accredited"/>
+          <img src="bc-ielts-logo.png" class="footer-bc-logo" alt="British Council IELTS"/>
+          <img src="icef-logo.png" class="footer-icef-logo" alt="ICEF Accredited"/>
         </div>
       </div>
       <div>
@@ -1203,11 +1224,18 @@ a{text-decoration:none;color:inherit}
         <div class="footer-col-t">Контакты</div>
         <div class="footer-links">
           <a href="tel:+77001277788" class="footer-link">+7 700 127 77 88</a>
-          <a href="/cdn-cgi/l/email-protection#4b22252d240b2c38282e253f2e39652031" class="footer-link"><span class="__cf_email__" data-cfemail="7910171f16391e0a1a1c170d1c0b571203">[email&#160;protected]</span></a>
+          <a href="mailto:[email protected]" class="footer-link footer-link--nowrap">[email protected]</a>
           <a href="#offices" class="footer-link">📍 Сарайшык 34, Астана</a>
           <a href="#offices" class="footer-link">📍 Сыганак 15, Астана</a>
           <a href="#offices" class="footer-link">📍 Улы Дала 41/6, Астана</a>
           <a href="#offices" class="footer-link">📍 Сейфуллина 574/1, Алматы</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-t">Компания</div>
+        <div class="footer-links">
+          <a href="about.html" class="footer-link">О нас</a>
+          <a href="faq.html" class="footer-link">FAQ</a>
         </div>
       </div>
     </div>
@@ -1217,7 +1245,7 @@ a{text-decoration:none;color:inherit}
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 /* ══ PROMO SLIDER — inlined ══ */
 (function(){
   var track=document.getElementById('pt');
@@ -1480,7 +1508,15 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
       reviews_em: 'студенты',
       quiz_h:     'Подбери программу под свою цель',
       footer_copy:'© 2026 GSC Study. Все права защищены.',
-      wa_bubble:  'Привет! 👋 Напишите нам — ответим в течение нескольких минут.'
+      wa_bubble:  'Привет! 👋 Напишите нам — ответим в течение нескольких минут.',
+
+      psb_head: 'С чего начнётся <em>твой путь?</em>',
+      psb_1_t:  'Хочу подтянуть английский',
+      psb_1_s:  'Для работы, путешествий или общения',
+      psb_2_t:  'Нужен высокий балл для сертификата',
+      psb_2_s:  'Интенсивная подготовка к IELTS и SAT',
+      psb_3_t:  'Мечтаю учиться в другой стране',
+      psb_3_s:  'UK, Германия, Канада, ОАЭ и ещё 15+ стран'
     },
     kz: {
       nav_abroad:   'Шет елге',
@@ -1512,7 +1548,15 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
       reviews_em: 'не дейді',
       quiz_h:     'Мақсатыңа сай бағдарламаны тап',
       footer_copy:'© 2026 GSC Study. Барлық құқықтар қорғалған.',
-      wa_bubble:  'Сәлем! 👋 Бізге жазыңыз — бірнеше минут ішінде жауап береміз.'
+      wa_bubble:  'Сәлем! 👋 Бізге жазыңыз — бірнеше минут ішінде жауап береміз.',
+
+      psb_head: 'Жолың <em>қалай басталады?</em>',
+      psb_1_t:  'Ағылшын тілімді жақсартқым келеді',
+      psb_1_s:  'Жұмыс, саяхат немесе қарым-қатынас үшін',
+      psb_2_t:  'Сертификатқа жоғары балл керек',
+      psb_2_s:  'IELTS және SAT-қа интенсив дайындық',
+      psb_3_t:  'Шет елде оқығым келеді',
+      psb_3_s:  'UK, Германия, Канада, БАӘ және тағы 15+ ел'
     },
     en: {
       nav_abroad:   'Study Abroad',
@@ -1544,7 +1588,15 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
       reviews_em: 'students say',
       quiz_h:     'Find the right program for your goal',
       footer_copy:'© 2026 GSC Study. All rights reserved.',
-      wa_bubble:  "Hi! 👋 Message us — we'll reply within minutes."
+      wa_bubble:  "Hi! 👋 Message us — we'll reply within minutes.",
+
+      psb_head: 'Where does <em>your journey</em> start?',
+      psb_1_t:  'I want to improve my English',
+      psb_1_s:  'For work, travel, or communication',
+      psb_2_t:  'I need a high score for a certificate',
+      psb_2_s:  'Intensive IELTS & SAT preparation',
+      psb_3_t:  'I want to study in another country',
+      psb_3_s:  'UK, Germany, Canada, UAE and 15+ more'
     }
   };
 
@@ -1575,7 +1627,10 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
     /* Update data-i18n elements */
     document.querySelectorAll('[data-i18n]').forEach(function(el){
       var key = el.getAttribute('data-i18n');
-      if(t[key] !== undefined) el.textContent = t[key];
+      if(t[key] === undefined) return;
+      // allow rich text in some strings (e.g., <em>)
+      if (typeof t[key] === 'string' && t[key].indexOf('<') !== -1) el.innerHTML = t[key];
+      else el.textContent = t[key];
     });
 
     /* Update phrases for typing animation */
@@ -1863,6 +1918,9 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
 .gte-opt.gte-sel .gte-opt-l{background:#2563EB;border-color:#2563EB;color:#fff}
 .gte-opt.gte-ok  .gte-opt-l{background:#22C55E;border-color:#22C55E;color:#fff}
 .gte-opt.gte-no  .gte-opt-l{background:#EF4444;border-color:#EF4444;color:#fff}
+.gte-opt-img{width:56px;height:42px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1.5px solid var(--border2,rgba(14,14,20,.16));background:var(--white2,#F2F0EB)}
+.gte-opt-img img{width:100%;height:100%;object-fit:cover;display:block}
+.gte-opt-t{line-height:1.35}
 .gte-actions{display:flex;align-items:center;margin-top:16px;gap:12px}
 .gte-fb{font-size:13px;font-weight:700;flex:1}
 .gte-fb.ok{color:#22C55E}.gte-fb.no{color:#EF4444}
@@ -1984,6 +2042,14 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
       <div class="gte-rlabel" id="gteRLabel"></div>
       <div class="gte-rdesc" id="gteRDesc"></div>
       <div class="gte-rstats" id="gteRStats"></div>
+      <div class="gte-write" id="gteWrite" style="display:none;text-align:left;margin:14px 0 10px">
+        <div style="font-family:var(--fd);font-size:14px;font-weight:800;margin-bottom:6px">Writing (опционально)</div>
+        <div id="gteWritePrompt" style="font-size:12px;color:var(--muted,#7B7885);line-height:1.6;margin-bottom:10px"></div>
+        <textarea id="gteWriteText" class="gte-write-ta" placeholder="Напиши ответ здесь…" style="width:100%;min-height:120px;resize:vertical;padding:12px 14px;border-radius:14px;border:2px solid var(--border2,rgba(14,14,20,.16));background:var(--white,#FAFAF8);font:inherit"></textarea>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
+          <button class="gte-next" style="padding:10px 16px" onclick="GTE.saveWriting()">💾 Сохранить writing</button>
+        </div>
+      </div>
       <a class="gte-rcta" id="gteRCTA" target="_blank">💬 Получить рекомендации в WhatsApp</a>
       <button class="gte-rretry" onclick="GTE.close()">← Вернуться к курсам</button>
     </div>
@@ -2128,6 +2194,20 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
   };
 
   // ── GTE API ───────────────────────────────────────────────
+  window.GTE_SET_QUESTIONS = function(type, qs){
+    try {
+      if(!type || !Array.isArray(qs)) return;
+      if(TESTS[type]) TESTS[type].qs = qs;
+    } catch(e) {}
+  };
+
+  window.GTE_SET_WRITING_PROMPT = function(type, prompt){
+    try{
+      window._GTE_WRP = window._GTE_WRP || {};
+      window._GTE_WRP[type] = String(prompt || '');
+    } catch(e) {}
+  };
+
   window.GTE = {
 
     go: function() {
@@ -2205,9 +2285,18 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
       var nxt = el('gteNext'); if(nxt) nxt.disabled=true;
       S.answered = false;
       var opts = el('gteOpts'); if(!opts) return;
-      opts.innerHTML = q.o.map(function(opt,i){
+      function optHtml(opt){
+        // opt can be string or {text,img}
+        if(opt && typeof opt === 'object'){
+          var t = (opt.text||'');
+          var im = (opt.img||'');
+          return (im?('<div class="gte-opt-img"><img alt="" src="'+im+'"></div>'):'') + '<div class="gte-opt-t">'+t+'</div>';
+        }
+        return '<div class="gte-opt-t">'+String(opt||'')+'</div>';
+      }
+      opts.innerHTML = (q.o||[]).map(function(opt,i){
         return '<div class="gte-opt" data-i="'+i+'" onclick="GTE.pick('+i+')">'
-          +'<div class="gte-opt-l">'+'ABCD'[i]+'</div>'+opt+'</div>';
+          +'<div class="gte-opt-l">'+'ABCD'[i]+'</div>'+optHtml(opt)+'</div>';
       }).join('');
     },
 
@@ -2298,7 +2387,40 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
         '<div class="gte-rs"><div class="gte-rs-n">'+(total-score)+'</div><div class="gte-rs-l">Ошибок</div></div>'+
         '<div class="gte-rs"><div class="gte-rs-n">'+pct+'%</div><div class="gte-rs-l">Точность</div></div>';
       if(rcta) rcta.href='https://wa.me/77718080828?text='+encodeURIComponent(waMsg);
+
+      // Writing prompt (optional, configured from admin via Supabase content key writing_prompt_<type>)
+      try {
+        var wr = (window._GTE_WRP && window._GTE_WRP[S.type]) ? String(window._GTE_WRP[S.type]||'') : '';
+        var wwrap = el('gteWrite');
+        if (wwrap) {
+          if (wr.trim()) {
+            wwrap.style.display = 'block';
+            var wp = el('gteWritePrompt'); if (wp) wp.textContent = wr.trim();
+          } else {
+            wwrap.style.display = 'none';
+          }
+        }
+      } catch(e) {}
+
       gteShow('gteRScreen');
+    },
+
+    saveWriting: function() {
+      try {
+        var ta = el('gteWriteText');
+        var txt = (ta && ta.value) ? String(ta.value).trim() : '';
+        if (!txt) { alert('Напиши текст в Writing.'); return; }
+        // Save into last result in localStorage (and try Supabase if column exists)
+        var last = { type: S.type, typeName: (TESTS[S.type]||{}).name || S.type, name: S.name||'', phone: S.phone||'', writing: txt, date: new Date().toLocaleDateString('ru-RU') };
+        try {
+          var res = JSON.parse(localStorage.getItem('gsc_test_results')||'[]');
+          if (res && res.length) { res[0].writing = txt; localStorage.setItem('gsc_test_results', JSON.stringify(res)); }
+        } catch(e2) {}
+        if (window.gscSaveTestResult) {
+          window.gscSaveTestResult({ ...last });
+        }
+        alert('Writing сохранён.');
+      } catch(e) {}
     },
 
     close: function() {
@@ -2364,15 +2486,38 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
       if (imgs.hero) applyHero(imgs.hero);
     } else {
       /* ── SUPABASE mode ── */
-      var [offRows, rvRows, prRows] = await Promise.all([
+      var [offRows, rvRows, prRows, tqI, tqS, tqE, tqK] = await Promise.all([
         sbGet('offices', '?order=sort_order'),
         sbGet('reviews', '?is_active=eq.true&order=sort_order'),
         sbGet('promo_slides', '?order=sort_order'),
+        sbGet('test_questions', "?test_type=eq.ielts&order=sort_order"),
+        sbGet('test_questions', "?test_type=eq.sat&order=sort_order"),
+        sbGet('test_questions', "?test_type=eq.english&order=sort_order"),
+        sbGet('test_questions', "?test_type=eq.kids&order=sort_order"),
       ]);
       var contentRows = await sbGet('content');
       var C = {};
       contentRows.forEach(function(r) { C[r.key] = r.value; });
       applyContent(C);
+      // Writing prompts for tests (optional)
+      try {
+        if (window.GTE_SET_WRITING_PROMPT) {
+          if (C.writing_prompt_ielts)  window.GTE_SET_WRITING_PROMPT('ielts',  C.writing_prompt_ielts);
+          if (C.writing_prompt_sat)    window.GTE_SET_WRITING_PROMPT('sat',    C.writing_prompt_sat);
+          if (C.writing_prompt_english)window.GTE_SET_WRITING_PROMPT('english',C.writing_prompt_english);
+          if (C.writing_prompt_kids)   window.GTE_SET_WRITING_PROMPT('kids',   C.writing_prompt_kids);
+        }
+      } catch(e) {}
+      // Apply test questions (admin-controlled)
+      try {
+        var mapQ = function(row){ return { s: row.section||'', t: row.question||'', h: row.hint||'', o: row.options||['','','',''], a: row.answer||0 }; };
+        if (window.GTE_SET_QUESTIONS) {
+          if (tqI && tqI.length) window.GTE_SET_QUESTIONS('ielts',  tqI.map(mapQ));
+          if (tqS && tqS.length) window.GTE_SET_QUESTIONS('sat',    tqS.map(mapQ));
+          if (tqE && tqE.length) window.GTE_SET_QUESTIONS('english', tqE.map(mapQ));
+          if (tqK && tqK.length) window.GTE_SET_QUESTIONS('kids',    tqK.map(mapQ));
+        }
+      } catch(e) {}
       if (offRows.length) renderOffices(offRows.map(function(o) {
         return { city:o.city, name:o.name, addr:o.addr, hrs:o.hrs, main:o.is_main };
       }));
@@ -2457,10 +2602,12 @@ function startTest(type){var msgs={IELTS:'Хочу пройти бесплатн
       return;
     }
     try {
+      var payload = { name:result.name||'', phone:result.phone||'', test_type:result.type, test_name:result.typeName, score:result.score, total:result.total, level:String(result.level) };
+      if (result.writing) payload.writing = String(result.writing);
       await fetch(SUPABASE_URL + '/rest/v1/test_results', {
         method: 'POST',
         headers: { 'apikey':SUPABASE_KEY, 'Authorization':'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json' },
-        body: JSON.stringify({ name:result.name||'', phone:result.phone||'', test_type:result.type, test_name:result.typeName, score:result.score, total:result.total, level:String(result.level) })
+        body: JSON.stringify(payload)
       });
     } catch(e) {}
   };
