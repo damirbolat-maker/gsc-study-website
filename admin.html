@@ -528,6 +528,7 @@ input,textarea,select{font-family:var(--f)}
       <div class="fr"><label class="fl">Google Analytics</label><input class="fi" id="cfg-ga" value="G-XXXXXXXXXX"></div>
       <div class="fr"><label class="fl">Facebook Pixel</label><input class="fi" id="cfg-fbpx" placeholder="000000000000"></div>
       <div class="fr"><label class="fl">2GIS URL</label><input class="fi" id="cfg-2gis" value="https://2gis.kz/nur-sultan/search/GSC%20Study"></div>
+      <div class="fr"><label class="fl">Bitrix24 Webhook (crm.lead.add)</label><input class="fi" id="cfg-bitrix" placeholder="https://.../rest/1/xxx/crm.lead.add.json"></div>
       <div><button class="btn p" id="saveIntBtn">💾 Сохранить</button></div>
     </div>
     <div class="sc2">
@@ -595,146 +596,228 @@ input,textarea,select{font-family:var(--f)}
 <div class="twrap" id="tw"></div>
 <script>
 /* ═══════════════════════════════════════════════════════════════
-   GSC SUPABASE ADAPTER v1.0
-   Replace SUPABASE_URL and SUPABASE_KEY with your project values
+   GSC ADMIN DATA ADAPTER v1 — Vercel KV powered
+   Admin Auth: uses Basic Auth (ADMIN_USER/ADMIN_PASS on server)
    ═══════════════════════════════════════════════════════════════ */
 
-const SUPABASE_URL = 'https://alzouuuaxqzwrcytrpvm.supabase.co';     // https://xxxx.supabase.co
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsem91dXVheHF6d3JjeXRycHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjIwMTgsImV4cCI6MjA5MTEzODAxOH0.X36icj-lQvnPARn9QKRd-X2FOLc8dLn56ljD1_ew3_Y'; // eyJh...
-
-function isSupabaseNotConfigured() {
-  var u = (SUPABASE_URL || '').trim();
-  var k = (SUPABASE_KEY || '').trim();
-  if (!u || !k) return true;
-  if (/PLACEHOLDER|xxxx\.supabase|REPLACE_/i.test(u)) return true;
-  if (/PLACEHOLDER|REPLACE_/i.test(k) || k.length < 30) return true;
-  return false;
-}
-
-/* ── Low-level fetch wrapper ── */
-async function sbFetch(path, method, body, extraHeaders) {
+function basicAuthHeader() {
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-      method: method || 'GET',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal',
-        ...(extraHeaders || {})
-      },
-      body: body ? JSON.stringify(body) : undefined
-    });
-    if (!res.ok) {
-      const txt = await res.text();
-      if (res.status === 404 || txt.includes('relation') || txt.includes('does not exist')) {
-        throw new Error('Таблицы не созданы. Запусти SQL схему в Supabase → SQL Editor → Run');
-      }
-      throw new Error(res.status + ': ' + txt.substring(0, 100));
-    }
-    return res.status === 204 ? null : res.json();
-  } catch(e) {
-    if (e.name === 'TypeError' && e.message === 'Failed to fetch') {
-      throw new Error('CORS / сеть. Проверь: 1) Supabase URL верный? 2) SQL схема запущена?');
-    }
-    throw e;
-  }
+    const s = JSON.parse(localStorage.getItem('gsc_session') || 'null');
+    if (!s || !s.login || !s.pass) return '';
+    return 'Basic ' + btoa(s.login + ':' + s.pass);
+  } catch (e) { return ''; }
 }
 
-/* ── DB API — same interface as old localStorage adapter ── */
+async function apiFetch(path, method, body, needsAuth) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (needsAuth) {
+    const h = basicAuthHeader();
+    if (h) headers['Authorization'] = h;
+  }
+  const res = await fetch('/api/' + path, {
+    method: method || 'GET',
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const txt = await res.text().catch(() => '');
+  let json = null;
+  try { json = txt ? JSON.parse(txt) : null; } catch(e) {}
+  if (!res.ok) {
+    const msg = (json && (json.error || json.message)) ? (json.error || json.message) : (txt || ('http_' + res.status));
+    throw new Error(msg);
+  }
+  return json;
+}
+
+async function kvGet(key, defVal) {
+  const j = await apiFetch('data?key=' + encodeURIComponent(key), 'GET', null, false);
+  return j && 'value' in j ? (j.value ?? defVal) : defVal;
+}
+
+async function kvSet(key, value) {
+  return apiFetch('data?key=' + encodeURIComponent(key), 'PUT', { value }, true);
+}
+
+async function kvDel(key) {
+  return apiFetch('data?key=' + encodeURIComponent(key), 'DELETE', null, true);
+}
+
+/* ── DB API — app-level models stored in KV ── */
 const DB = {
   /* LEADS */
   async getLeads() {
-    return sbFetch('leads?order=created_at.desc&limit=500');
+    const j = await apiFetch('leads?limit=500', 'GET', null, true);
+    return (j && j.leads) || [];
   },
   async addLead(lead) {
-    return sbFetch('leads', 'POST', {
-      name: lead.name, phone: lead.phone, course: lead.course,
-      source: lead.source || 'Сайт', status: lead.status || 'new',
-      note: lead.note || '', manager: lead.manager || ''
-    });
+    // admin-created lead (still uses public POST)
+    const j = await apiFetch('leads', 'POST', {
+      name: lead.name, phone: lead.phone, city: lead.city || '',
+      email: lead.email || '',
+      source: lead.source || 'Admin',
+      product: lead.course || lead.product || ''
+    }, false);
+    return j && j.lead;
   },
   async updateLeadStatus(id, status) {
-    return sbFetch('leads?id=eq.' + id, 'PATCH', { status });
+    return apiFetch('leads?id=' + encodeURIComponent(id), 'PATCH', { status }, true);
   },
   async deleteLead(id) {
-    return sbFetch('leads?id=eq.' + id, 'DELETE');
+    return apiFetch('leads?id=' + encodeURIComponent(id), 'DELETE', null, true);
   },
 
   /* TEST RESULTS */
   async getTestResults() {
-    return sbFetch('test_results?order=created_at.desc&limit=500');
+    const j = await apiFetch('test-results?limit=500', 'GET', null, true);
+    return (j && j.results) || [];
   },
   async addTestResult(r) {
-    return sbFetch('test_results', 'POST', {
-      name: r.name || '', phone: r.phone || '',
-      test_type: r.type, test_name: r.typeName,
-      score: r.score, total: r.total, level: String(r.level)
-    });
+    return apiFetch('test-results', 'POST', r, false);
   },
 
   /* CONTENT (ключи сайта) */
   async getContent() {
-    const rows = await sbFetch('content');
-    const obj = {};
-    (rows || []).forEach(r => { obj[r.key] = r.value; });
-    return obj;
+    return (await kvGet('content', {})) || {};
   },
   async setContent(key, value) {
-    // PATCH doesn't create rows (it returns []), so use UPSERT.
-    return sbFetch(
-      'content?on_conflict=key',
-      'POST',
-      [{ key, value, updated_at: new Date().toISOString() }],
-      { 'Prefer': 'resolution=merge-duplicates,return=representation' }
-    );
+    const c = (await kvGet('content', {})) || {};
+    c[key] = value;
+    return kvSet('content', c);
   },
 
   /* OFFICES */
   async getOffices() {
-    return sbFetch('offices?order=sort_order');
+    return (await kvGet('offices', [])) || [];
+  },
+  async setOffices(offices) {
+    return kvSet('offices', offices || []);
   },
   async updateOffice(id, data) {
-    return sbFetch('offices?id=eq.' + id, 'PATCH', data);
+    const arr = (await kvGet('offices', [])) || [];
+    const next = arr.map(o => (String(o.id) === String(id) ? { ...o, ...data } : o));
+    await kvSet('offices', next);
+    return { ok:true };
   },
 
-  /* REVIEWS */
+  /* REVIEWS (Google-like cards) */
   async getReviews() {
-    return sbFetch('reviews?is_active=eq.true&order=sort_order');
+    return (await kvGet('google_reviews', [])) || [];
+  },
+  async setReviews(reviews) {
+    return kvSet('google_reviews', reviews || []);
   },
   async addReview(r) {
-    return sbFetch('reviews', 'POST', r);
+    const arr = (await kvGet('google_reviews', [])) || [];
+    const id = r && r.id ? r.id : (Date.now() + Math.random()).toString(36);
+    arr.unshift({ id, ...r });
+    await kvSet('google_reviews', arr.slice(0,200));
+    return { ok:true, id };
   },
   async deleteReview(id) {
-    return sbFetch('reviews?id=eq.' + id, 'DELETE');
+    const arr = (await kvGet('google_reviews', [])) || [];
+    const next = arr.filter(r => String(r.id) !== String(id));
+    await kvSet('google_reviews', next);
+    return { ok:true };
   },
 
   /* PROMO SLIDES */
   async getPromo() {
-    return sbFetch('promo_slides?order=sort_order');
+    return (await kvGet('promo_slides', [])) || [];
+  },
+  async setPromo(promo) {
+    return kvSet('promo_slides', promo || []);
   },
   async addPromo(p) {
-    return sbFetch('promo_slides', 'POST', p);
+    const arr = (await kvGet('promo_slides', [])) || [];
+    const id = p && p.id ? p.id : (Date.now() + Math.random()).toString(36);
+    arr.push({ id, ...p });
+    await kvSet('promo_slides', arr);
+    return { ok:true, id };
   },
   async updatePromo(id, data) {
-    return sbFetch('promo_slides?id=eq.' + id, 'PATCH', data);
+    const arr = (await kvGet('promo_slides', [])) || [];
+    const next = arr.map(p => (String(p.id) === String(id) ? { ...p, ...data } : p));
+    await kvSet('promo_slides', next);
+    return { ok:true };
   },
   async deletePromo(id) {
-    return sbFetch('promo_slides?id=eq.' + id, 'DELETE');
+    const arr = (await kvGet('promo_slides', [])) || [];
+    const next = arr.filter(p => String(p.id) !== String(id));
+    await kvSet('promo_slides', next);
+    return { ok:true };
   },
 
   /* TEST QUESTIONS */
   async getQuestions(type) {
-    return sbFetch('test_questions?test_type=eq.' + type + '&order=sort_order');
+    return (await kvGet('test_questions_' + type, [])) || [];
+  },
+  async setQuestions(type, qs) {
+    return kvSet('test_questions_' + type, qs || []);
   },
   async addQuestion(q) {
-    return sbFetch('test_questions', 'POST', q);
+    const type = q && (q.test_type || q.type);
+    const t = String(type || '');
+    if (!t) throw new Error('missing_test_type');
+    const arr = (await kvGet('test_questions_' + t, [])) || [];
+    const id = q && q.id ? q.id : (Date.now() + Math.random()).toString(36);
+    arr.push({ id, ...q, test_type: t });
+    await kvSet('test_questions_' + t, arr);
+    return [{ id, ...q, test_type: t }];
   },
   async updateQuestion(id, data) {
-    return sbFetch('test_questions?id=eq.' + id, 'PATCH', data);
+    const type = data && (data.test_type || data.type);
+    const t = String(type || '');
+    if (!t) throw new Error('missing_test_type');
+    const arr = (await kvGet('test_questions_' + t, [])) || [];
+    const next = arr.map(q => (String(q.id) === String(id) ? { ...q, ...data } : q));
+    await kvSet('test_questions_' + t, next);
+    return { ok:true };
   },
   async deleteQuestion(id) {
-    return sbFetch('test_questions?id=eq.' + id, 'DELETE');
+    // try all types
+    const types = ['ielts','sat','english','kids'];
+    for (const t of types) {
+      const arr = (await kvGet('test_questions_' + t, [])) || [];
+      const next = arr.filter(q => String(q.id) !== String(id));
+      if (next.length !== arr.length) {
+        await kvSet('test_questions_' + t, next);
+        return { ok:true };
+      }
+    }
+    return { ok:true };
+  },
+
+  /* WRITING PROMPT */
+  async getWritingPrompt(type) {
+    return (await kvGet('writing_prompt_' + type, '')) || '';
+  },
+  async setWritingPrompt(type, text) {
+    return kvSet('writing_prompt_' + type, text || '');
+  },
+
+  /* SETTINGS / INTEGRATIONS */
+  async getCfg() { return (await kvGet('cfg', {})) || {}; },
+  async setCfg(cfg) { return kvSet('cfg', cfg || {}); },
+  async getIntegrations() { return (await kvGet('integrations', {})) || {}; },
+  async setIntegrations(v) { return kvSet('integrations', v || {}); },
+  async setBitrixWebhook(url) { return kvSet('bitrix_webhook', String(url || '').trim()); },
+  async getBitrixWebhook() { return (await kvGet('bitrix_webhook', '')) || ''; },
+
+  /* DANGER ZONE */
+  async clearAll() {
+    await Promise.allSettled([
+      kvDel('content'),
+      kvDel('offices'),
+      kvDel('google_reviews'),
+      kvDel('promo_slides'),
+      kvDel('cfg'),
+      kvDel('integrations'),
+      kvDel('bitrix_webhook')
+    ]);
+    // questions per type
+    await Promise.allSettled(['ielts','sat','english','kids'].map(t => kvDel('test_questions_' + t)));
+    await Promise.allSettled(['ielts','sat','english','kids'].map(t => kvDel('writing_prompt_' + t)));
+    return { ok:true };
   }
 };
 
@@ -755,7 +838,7 @@ function toast(msg, type) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   GSC ADMIN v3 — Supabase powered
+   GSC ADMIN v4 — KV powered
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── AUTH (stays local) ── */
@@ -767,17 +850,30 @@ let ME = null;
 const eid = id => document.getElementById(id);
 const fd = d => new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
-function login() {
+async function login() {
   const u = eid('lu').value.trim(), p = eid('lp').value;
-  const usr = USERS[u];
-  if (usr && usr.pass === p) {
-    ME = { login: u, ...usr };
-    localStorage.setItem('gsc_session', JSON.stringify({ ...ME, exp: Date.now() + 8*60*60*1000 }));
+  if (!u || !p) { eid('le').style.display = 'block'; return; }
+  // store credentials for Basic Auth API calls
+  const me = {
+    login: u,
+    pass: p,
+    role: (u === 'admin' ? 'Администратор' : 'Менеджер'),
+    name: (u === 'admin' ? 'Администратор' : 'Менеджер'),
+    exp: Date.now() + 8*60*60*1000
+  };
+  localStorage.setItem('gsc_session', JSON.stringify(me));
+  ME = me;
+  try {
+    // validate auth against protected endpoint
+    await apiFetch('leads?limit=1', 'GET', null, true);
     eid('le').style.display = 'none';
     initShell();
-  } else {
+  } catch (e) {
+    localStorage.removeItem('gsc_session');
+    ME = null;
     eid('le').style.display = 'block';
     eid('lp').value = '';
+    toast('Неверный логин/пароль (ADMIN_USER/ADMIN_PASS)', 'e');
   }
 }
 function logout() {
@@ -793,7 +889,7 @@ eid('sbout')?.addEventListener('click', logout);
 (function() {
   try {
     const s = JSON.parse(localStorage.getItem('gsc_session'));
-    if (s && USERS[s.login] && (!s.exp || Date.now() < s.exp)) { ME = s; initShell(); }
+    if (s && s.login && s.pass && (!s.exp || Date.now() < s.exp)) { ME = s; initShell(); }
     else { localStorage.removeItem('gsc_session'); }
   } catch(e) {}
 })();
@@ -801,26 +897,13 @@ eid('sbout')?.addEventListener('click', logout);
 /* ── SHELL ── */
 async function initShell() {
   // Quick connection test
-  try {
-    const ping = await fetch(SUPABASE_URL + '/rest/v1/leads?limit=1', {
-      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
-    });
-    if (ping.status === 401) showBanner('❌ Неверный API ключ Supabase');
-    else if (ping.status === 404) showBanner('⚠️ Таблицы не найдены — запусти gsc_schema.sql в Supabase SQL Editor');
-    else if (!ping.ok) showBanner('⚠️ Supabase ответил: ' + ping.status);
-    // else: connected OK
-  } catch(e) {
-    showBanner('❌ Нет связи с Supabase. Проверь интернет-соединение и URL проекта.');
-  }
+  try { await apiFetch('leads?limit=1', 'GET', null, true); }
+  catch(e){ showBanner('❌ Нет связи с API / неверная авторизация'); }
   eid('lw').style.display = 'none';
   eid('sh').classList.add('on');
   eid('sbav').textContent  = ME.name[0];
   eid('sbun').textContent  = ME.name;
   eid('sbur').textContent  = ME.role;
-
-  if (isSupabaseNotConfigured()) {
-    showBanner('⚠️ Supabase не настроен. Укажи SUPABASE_URL и anon JWT (ключ eyJ...) в начале скрипта в admin.html');
-  }
 
   await renderDash();
 }
@@ -869,7 +952,10 @@ document.querySelectorAll('.mov').forEach(m =>
 /* ── BANNER ── */
 function showBanner(msg) {
   const b = document.getElementById('supabaseBanner');
-  if (b) { b.textContent = msg; b.style.display = 'flex'; }
+  if (b) {
+    b.innerHTML = msg + `<span style="margin-left:auto;opacity:.6;cursor:pointer" onclick="this.parentElement.style.display='none'">✕</span>`;
+    b.style.display = 'flex';
+  }
 }
 
 /* ── DASHBOARD ── */
@@ -908,7 +994,7 @@ async function renderDash() {
     }
     renderLeadsTable(leads);
   } catch(e) {
-    showBanner('❌ ' + e.message + ' | Проверь: SQL схема запущена в Supabase? URL и ключ верные?');
+    showBanner('❌ ' + e.message);
   }
 }
 
@@ -1455,39 +1541,85 @@ async function renderTestResults() {
   ).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:20px">Результаты появятся после прохождения тестов</td></tr>';
 }
 
-/* ── IMAGES (localStorage only — файлы хранятся локально) ── */
-function uploadImg(input, key) {
+/* ── IMAGES (Vercel Blob + KV) ── */
+async function uploadImg(input, key) {
   const file = input.files[0]; if(!file) return;
-  if (file.size > 2097152) { toast('Файл >2MB','e'); return; }
-  const r = new FileReader();
-  r.onload = e => {
-    const imgs = JSON.parse(localStorage.getItem('gsc_images')||'{}');
-    imgs[key] = e.target.result;
+  if (file.size > 6 * 1024 * 1024) { toast('Файл >6MB','e'); return; }
+  try{
+    const h = basicAuthHeader();
+    const res = await fetch('/api/blob-upload?folder=images&filename=' + encodeURIComponent(file.name), {
+      method: 'POST',
+      headers: { 'Authorization': h, 'Content-Type': file.type || 'application/octet-stream' },
+      body: file
+    });
+    const j = await res.json().catch(() => null);
+    if(!res.ok || !j || !j.ok) throw new Error((j&&j.error)||('http_'+res.status));
+    const imgs = (await DB.getIntegrations()).images || (await kvGet('images', {})) || {};
+    imgs[key] = j.url;
+    await kvSet('images', imgs);
     localStorage.setItem('gsc_images', JSON.stringify(imgs));
     const el = eid('img-'+key);
-    if (el) { el.src = e.target.result; el.style.display = 'block'; }
-    toast('Изображение сохранено','s');
-  };
-  r.readAsDataURL(file);
+    if (el) { el.src = j.url; el.style.display = 'block'; }
+    toast('Изображение загружено','s');
+  }catch(e){
+    toast('Не удалось загрузить изображение','e');
+  }
 }
 
-function loadImages() {
-  const imgs = JSON.parse(localStorage.getItem('gsc_images')||'{}');
+async function loadImages() {
+  const imgs = (await kvGet('images', {})) || {};
+  localStorage.setItem('gsc_images', JSON.stringify(imgs));
   if (imgs.hero) { const e=eid('img-hero'); if(e){e.src=imgs.hero;e.style.display='block';} }
 }
 
-/* ── SETTINGS ── */
-function saveSettings() {
-  localStorage.setItem('gsc_cfg', JSON.stringify({
-    active:  eid('cfg-active')?.checked,
-    wa:      eid('cfg-wa')?.checked,
-    tests:   eid('cfg-tests')?.checked,
-  }));
+/* ── SETTINGS / INTEGRATIONS ── */
+async function loadSettings() {
+  try{
+    const cfg = (await DB.getCfg()) || {};
+    eid('cfg-active') && (eid('cfg-active').checked = cfg.active !== false);
+    eid('cfg-wa')     && (eid('cfg-wa').checked     = cfg.wa !== false);
+    eid('cfg-tests')  && (eid('cfg-tests').checked  = cfg.tests !== false);
+    eid('cfg-lang')   && (eid('cfg-lang').checked   = cfg.lang !== false);
+
+    const ints = (await DB.getIntegrations()) || {};
+    eid('cfg-ga')   && (eid('cfg-ga').value   = ints.ga || '');
+    eid('cfg-fbpx') && (eid('cfg-fbpx').value = ints.fbpx || '');
+    eid('cfg-2gis') && (eid('cfg-2gis').value = ints.gis2 || '');
+    const bx = await DB.getBitrixWebhook();
+    eid('cfg-bitrix') && (eid('cfg-bitrix').value = bx || '');
+  }catch(e){}
+}
+
+async function saveSettings() {
+  const cfg = {
+    active:  !!eid('cfg-active')?.checked,
+    wa:      !!eid('cfg-wa')?.checked,
+    tests:   !!eid('cfg-tests')?.checked,
+    lang:    !!eid('cfg-lang')?.checked
+  };
+  await DB.setCfg(cfg);
+  localStorage.setItem('gsc_cfg', JSON.stringify(cfg));
   toast('Настройки сохранены','s');
 }
 
+async function saveIntegrations() {
+  const ints = {
+    ga:   (eid('cfg-ga')?.value || '').trim(),
+    fbpx: (eid('cfg-fbpx')?.value || '').trim(),
+    gis2: (eid('cfg-2gis')?.value || '').trim()
+  };
+  await DB.setIntegrations(ints);
+  localStorage.setItem('gsc_integrations', JSON.stringify(ints));
+  const bx = (eid('cfg-bitrix')?.value || '').trim();
+  await DB.setBitrixWebhook(bx);
+  toast('Интеграции сохранены','s');
+}
+
 /* ── INIT ── */
+eid('saveSettBtn')?.addEventListener('click', () => saveSettings().catch(() => toast('Не удалось сохранить','e')));
+eid('saveIntBtn')?.addEventListener('click', () => saveIntegrations().catch(() => toast('Не удалось сохранить','e')));
 loadImages();
+loadSettings();
 
 </script>
 </body>
